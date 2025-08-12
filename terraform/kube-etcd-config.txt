@@ -1,0 +1,230 @@
+# Dirs
+mkdir -p /var/lib/etcd
+mkdir -p /var/lib/kubernetes/pki
+
+# Move certs/keys (keep your filenames)
+install -m 0644 -o root -g root ca.pem /var/lib/kubernetes/pki/ca.pem
+
+# etcd server/peer certs for this node
+install -m 0600 -o root -g root etcd-$(hostname -s)-key.pem /var/lib/kubernetes/pki/etcd-$(hostname -s)-key.pem
+install -m 0644 -o root -g root etcd-$(hostname -s).pem     /var/lib/kubernetes/pki/etcd-$(hostname -s).pem
+
+# API server certs/keys
+install -m 0600 -o root -g root kube-apiserver-key.pem /var/lib/kubernetes/pki/kube-apiserver-key.pem
+install -m 0644 -o root -g root kube-apiserver.pem     /var/lib/kubernetes/pki/kube-apiserver.pem
+
+# Front-proxy CA + client (for aggregator)
+install -m 0644 -o root -g root front-proxy-ca.pem    /var/lib/kubernetes/pki/front-proxy-ca.pem
+install -m 0600 -o root -g root front-proxy-client-key.pem /var/lib/kubernetes/pki/front-proxy-client-key.pem
+install -m 0644 -o root -g root front-proxy-client.pem     /var/lib/kubernetes/pki/front-proxy-client.pem
+
+# apiserver → kubelet client cert
+install -m 0600 -o root -g root apiserver-kubelet-client-key.pem /var/lib/kubernetes/pki/apiserver-kubelet-client-key.pem
+install -m 0644 -o root -g root apiserver-kubelet-client.pem     /var/lib/kubernetes/pki/apiserver-kubelet-client.pem
+
+# Service account keys
+install -m 0600 -o root -g root service-accounts.key /var/lib/kubernetes/pki/service-accounts.key
+install -m 0644 -o root -g root service-accounts.pub /var/lib/kubernetes/pki/service-accounts.pub
+
+# Kubeconfigs for control-plane components (if these files are your kubeconfigs)
+# (if they are binaries, skip; if they are kubeconfigs, keep perms 0644)
+if [ -f kube-controller-manager ]; then install -m 0644 -o root -g root kube-controller-manager /var/lib/kubernetes/kube-controller-manager.kubeconfig; fi
+if [ -f kube-scheduler ]; then install -m 0644 -o root -g root kube-scheduler /var/lib/kubernetes/kube-scheduler.kubeconfig; fi
+if [ -f kube-apiserver ]; then install -m 0644 -o root -g root kube-apiserver /var/lib/kubernetes/kube-apiserver.kubeconfig; fi
+
+# Optional: kubectl binary
+if [ -x kubectl ]; then install -m 0755 -o root -g root kubectl /usr/local/bin/kubectl; fi
+
+
+
+# === etcd service files ===
+
+tee /etc/systemd/system/etcd.service >/dev/null <<UNIT
+[Unit]
+Description=etcd
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=root
+Type=notify
+Environment="ETCD_NAME=$(hostname -s)"
+Environment="ETCD_DATA_DIR=/var/lib/etcd"
+
+# Cluster discovery
+Environment="ETCD_INITIAL_CLUSTER=k8s-ha-cluster-cp-1=https://k8s-ha-cluster-cp-1:2380,k8s-ha-cluster-cp-2=https://k8s-ha-cluster-cp-2:2380,k8s-ha-cluster-cp-3=https://k8s-ha-cluster-cp-3:2380"
+Environment="ETCD_INITIAL_CLUSTER_STATE=new"
+
+# URLs (ensure hostnames resolve via /etc/hosts or DNS)
+Environment="ETCD_INITIAL_ADVERTISE_PEER_URLS=https://$(hostname -s):2380"
+Environment="ETCD_ADVERTISE_CLIENT_URLS=https://$(hostname -s):2379"
+Environment="ETCD_LISTEN_PEER_URLS=https://0.0.0.0:2380"
+Environment="ETCD_LISTEN_CLIENT_URLS=https://0.0.0.0:2379"
+
+# TLS for client and peer
+Environment="ETCD_TRUSTED_CA_FILE=/var/lib/kubernetes/pki/ca.pem"
+Environment="ETCD_CERT_FILE=/var/lib/kubernetes/pki/$(hostname -s).pem"
+Environment="ETCD_KEY_FILE=/var/lib/kubernetes/pki/$(hostname -s)-key.pem"
+Environment="ETCD_CLIENT_CERT_AUTH=true"
+
+Environment="ETCD_PEER_TRUSTED_CA_FILE=/var/lib/kubernetes/pki/ca.pem"
+Environment="ETCD_PEER_CERT_FILE=/var/lib/kubernetes/pki/$(hostname -s).pem"
+Environment="ETCD_PEER_KEY_FILE=/var/lib/kubernetes/pki/$(hostname -s)-key.pem"
+Environment="ETCD_PEER_CLIENT_CERT_AUTH=true"
+
+ExecStart=/usr/local/bin/etcd
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+UNIT
+
+
+
+
+
+
+
+
+
+
+----- > k8s-ha-cluster-cp-1
+
+tee /etc/systemd/system/etcd.service >/dev/null <<'UNIT'
+[Unit]
+Description=etcd
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=root
+Type=notify
+Environment="ETCD_NAME=$(hostname -s)"
+Environment="ETCD_DATA_DIR=/var/lib/etcd"
+
+# Cluster discovery
+Environment="ETCD_INITIAL_CLUSTER=k8s-ha-cluster-cp-1=https://k8s-ha-cluster-cp-1:2380,k8s-ha-cluster-cp-2=https://k8s-ha-cluster-cp-2:2380,k8s-ha-cluster-cp-3=https://k8s-ha-cluster-cp-3:2380"
+Environment="ETCD_INITIAL_CLUSTER_STATE=new"
+
+# URLs (ensure k8s-ha-cluster-cp-1/k8s-ha-cluster-cp-2/k8s-ha-cluster-cp-3 resolve in /etc/hosts or DNS)
+Environment="ETCD_INITIAL_ADVERTISE_PEER_URLS=https://$(hostname -s):2380"
+Environment="ETCD_ADVERTISE_CLIENT_URLS=https://$(hostname -s):2379"
+Environment="ETCD_LISTEN_PEER_URLS=https://0.0.0.0:2380"
+Environment="ETCD_LISTEN_CLIENT_URLS=https://0.0.0.0:2379"
+
+# TLS for client and peer
+Environment="ETCD_TRUSTED_CA_FILE=/var/lib/kubernetes/pki/ca.pem"
+Environment="ETCD_CERT_FILE=/var/lib/kubernetes/pki/$(hostname -s).pem"
+Environment="ETCD_KEY_FILE=/var/lib/kubernetes/pki/$(hostname -s)-key.pem"
+Environment="ETCD_CLIENT_CERT_AUTH=true"
+
+Environment="ETCD_PEER_TRUSTED_CA_FILE=/var/lib/kubernetes/pki/ca.pem"
+Environment="ETCD_PEER_CERT_FILE=/var/lib/kubernetes/pki/$(hostname -s).pem"
+Environment="ETCD_PEER_KEY_FILE=/var/lib/kubernetes/pki/$(hostname -s)-key.pem"
+Environment="ETCD_PEER_CLIENT_CERT_AUTH=true"
+
+ExecStart=/usr/local/bin/etcd
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+UNIT
+
+--- k8s-ha-cluster-cp-2
+
+tee /etc/systemd/system/etcd.service >/dev/null <<'UNIT'
+[Unit]
+Description=etcd
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=root
+Type=notify
+Environment="ETCD_NAME=k8s-ha-cluster-cp-2"
+Environment="ETCD_DATA_DIR=/var/lib/etcd"
+
+# Cluster discovery
+Environment="ETCD_INITIAL_CLUSTER=k8s-ha-cluster-cp-1=https://k8s-ha-cluster-cp-1:2380,k8s-ha-cluster-cp-2=https://k8s-ha-cluster-cp-2:2380,k8s-ha-cluster-cp-3=https://k8s-ha-cluster-cp-3:2380"
+Environment="ETCD_INITIAL_CLUSTER_STATE=new"
+
+# URLs (ensure k8s-ha-cluster-cp-1/k8s-ha-cluster-cp-2/k8s-ha-cluster-cp-3 resolve in /etc/hosts or DNS)
+Environment="ETCD_INITIAL_ADVERTISE_PEER_URLS=https://k8s-ha-cluster-cp-2:2380"
+Environment="ETCD_ADVERTISE_CLIENT_URLS=https://k8s-ha-cluster-cp-2:2379"
+Environment="ETCD_LISTEN_PEER_URLS=https://0.0.0.0:2380"
+Environment="ETCD_LISTEN_CLIENT_URLS=https://0.0.0.0:2379"
+
+# TLS for client and peer
+Environment="ETCD_TRUSTED_CA_FILE=/var/lib/kubernetes/pki/ca.pem"
+Environment="ETCD_CERT_FILE=/var/lib/kubernetes/pki/etcd-k8s-ha-cluster-cp-2.pem"
+Environment="ETCD_KEY_FILE=/var/lib/kubernetes/pki/etcd-k8s-ha-cluster-cp-2-key.pem"
+Environment="ETCD_CLIENT_CERT_AUTH=true"
+
+Environment="ETCD_PEER_TRUSTED_CA_FILE=/var/lib/kubernetes/pki/ca.pem"
+Environment="ETCD_PEER_CERT_FILE=/var/lib/kubernetes/pki/etcd-k8s-ha-cluster-cp-2.pem"
+Environment="ETCD_PEER_KEY_FILE=/var/lib/kubernetes/pki/etcd-k8s-ha-cluster-cp-2-key.pem"
+Environment="ETCD_PEER_CLIENT_CERT_AUTH=true"
+
+ExecStart=/usr/local/bin/etcd
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+UNIT
+
+------> k8s-ha-cluster-cp-3
+
+
+tee /etc/systemd/system/etcd.service >/dev/null <<'UNIT'
+[Unit]
+Description=etcd
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=root
+Type=notify
+Environment="ETCD_NAME=k8s-ha-cluster-cp-3"
+Environment="ETCD_DATA_DIR=/var/lib/etcd"
+
+# Cluster discovery
+Environment="ETCD_INITIAL_CLUSTER=k8s-ha-cluster-cp-1=https://k8s-ha-cluster-cp-1:2380,k8s-ha-cluster-cp-2=https://k8s-ha-cluster-cp-2:2380,k8s-ha-cluster-cp-3=https://k8s-ha-cluster-cp-3:2380"
+Environment="ETCD_INITIAL_CLUSTER_STATE=new"
+
+# URLs (ensure k8s-ha-cluster-cp-1/k8s-ha-cluster-cp-2/k8s-ha-cluster-cp-3 resolve in /etc/hosts or DNS)
+Environment="ETCD_INITIAL_ADVERTISE_PEER_URLS=https://k8s-ha-cluster-cp-3:2380"
+Environment="ETCD_ADVERTISE_CLIENT_URLS=https://k8s-ha-cluster-cp-3:2379"
+Environment="ETCD_LISTEN_PEER_URLS=https://0.0.0.0:2380"
+Environment="ETCD_LISTEN_CLIENT_URLS=https://0.0.0.0:2379"
+
+# TLS for client and peer
+Environment="ETCD_TRUSTED_CA_FILE=/var/lib/kubernetes/pki/ca.pem"
+Environment="ETCD_CERT_FILE=/var/lib/kubernetes/pki/etcd-k8s-ha-cluster-cp-3.pem"
+Environment="ETCD_KEY_FILE=/var/lib/kubernetes/pki/etcd-k8s-ha-cluster-cp-3-key.pem"
+Environment="ETCD_CLIENT_CERT_AUTH=true"
+
+Environment="ETCD_PEER_TRUSTED_CA_FILE=/var/lib/kubernetes/pki/ca.pem"
+Environment="ETCD_PEER_CERT_FILE=/var/lib/kubernetes/pki/etcd-k8s-ha-cluster-cp-3.pem"
+Environment="ETCD_PEER_KEY_FILE=/var/lib/kubernetes/pki/etcd-k8s-ha-cluster-cp-3-key.pem"
+Environment="ETCD_PEER_CLIENT_CERT_AUTH=true"
+
+ExecStart=/usr/local/bin/etcd
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+UNIT
+
+
+systemctl daemon-reload
+ systemctl enable etcd
+ systemctl start etcd
+ systemctl status etcd
+
+
+
+journalctl -xeu etcd.service -b --no-pager | tail -n 100
