@@ -1,0 +1,27 @@
+
+
+ETCDCTL_API=3 etcdctl --endpoints="https://k8s-ha-cluster-cp-1:2379,https://k8s-ha-cluster-cp-2:2379,https://k8s-ha-cluster-cp-3:2379" --cacert /var/lib/kubernetes/ca.pem --cert /etc/etcd/etcd-k8s-ha-cluster-cp-1.pem --key etcd-k8s-ha-cluster-cp-1-key.pem endpoint health
+
+
+
+export ETCDCTL_API=3
+export ETCDCTL_ENDPOINTS=https://127.0.0.1:2379
+export ETCDCTL_CACERT=/var/lib/kubernetes/ca.pem
+export ETCDCTL_CERT=/etc/etcd/etcd-k8s-ha-cluster-cp-1.pem
+export ETCDCTL_KEY=/etc/etcd/etcd-k8s-ha-cluster-cp-1-key.pem
+export ETCDCTL_DIAL_TIMEOUT=3s
+
+etcdctl endpoint health --write-out=table
+etcdctl endpoint status --write-out=table
+
+
+
+for host in k8s-ha-cluster-cp-1 k8s-ha-cluster-cp-2 k8s-ha-cluster-cp-3; do
+  echo "Configuring ${host}..."
+  cat ${host}.crt
+done
+  ssh root@${host} mkdir /var/lib/kubelet/
+  scp ${host}.crt \
+    root@${host}:/var/lib/kubelet/kubelet.crt 
+  scp ${host}.key \
+    root@${host}:/var/lib/kubelet/kubelet.key
