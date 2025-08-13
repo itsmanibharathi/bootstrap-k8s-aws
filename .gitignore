@@ -1,6 +1,64 @@
+# ---- Python ----
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pkl
+*.egg
+*.egg-info/
+dist/
+build/
+.env
+venv/
+.venv/
+pip-log.txt
+*.log
+ansible/env
+
+# ---- Terraform ----
 *.tfstate
 *.tfstate.*
-.terraform.tfvars
 .terraform/
+.terraform.lock.hcl
+crash.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+*.tfvars
 
-ssh
+# ---- Ansible ----
+*.retry
+*.vault
+*.vault_password
+host_vars/*/vault.yml
+group_vars/*/vault.yml
+*.log
+
+# ---- Ansible Navigator ----
+.ansible-navigator/
+__ansible_navigator_cache__/
+ee_tests/
+tmp_ansible_navigator_*/
+ansible/artifacts
+
+
+# ---- SSH Keys ----
+ssh/*
+!ssh/config.example
+
+*.pem
+*.key
+
+# ---- OS / Editor ----
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+.idea/
+.vscode/
+
+
+
+
+zzzzzz

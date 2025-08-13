@@ -3,6 +3,15 @@ resource "aws_security_group" "jumpbox" {
   description = "Security group for jumpbox"
   vpc_id      = var.vpc_id
 
+  # Ingress (ALLOW ALL — consider tightening this!)
+  ingress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  # Egress (ALLOW ALL)tf
   egress {
     from_port   = 0
     to_port     = 0
@@ -13,35 +22,17 @@ resource "aws_security_group" "jumpbox" {
   tags = merge(var.tags, { Name = "${var.project_name}-jumpbox-sg", Role = "jumpbox" })
 }
 
-resource "aws_security_group_rule" "jumpbox_allow_all_in" {
-  type              = "ingress"
-  from_port         = 0
-  to_port           = 0
-  protocol          = "-1"
-  cidr_blocks       = ["0.0.0.0/0"]
-  security_group_id = aws_security_group.jumpbox.id
-}
-resource "aws_security_group_rule" "worker_allow_all_in" {
-  type              = "ingress"
-  from_port         = 0
-  to_port           = 0
-  protocol          = "-1"
-  cidr_blocks       = ["0.0.0.0/0"]
-  security_group_id = aws_security_group.worker.id
-}
-resource "aws_security_group_rule" "control_plane_allow_all_in" {
-  type              = "ingress"
-  from_port         = 0
-  to_port           = 0
-  protocol          = "-1"
-  cidr_blocks       = ["0.0.0.0/0"]
-  security_group_id = aws_security_group.control_plane.id
-}
-
 resource "aws_security_group" "control_plane" {
   name        = "${var.project_name}-control-plane-sg"
   description = "Security group for control plane nodes"
   vpc_id      = var.vpc_id
+
+  ingress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
 
   egress {
     from_port   = 0
@@ -57,6 +48,13 @@ resource "aws_security_group" "worker" {
   name        = "${var.project_name}-worker-sg"
   description = "Security group for worker nodes"
   vpc_id      = var.vpc_id
+
+  ingress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
 
   egress {
     from_port   = 0

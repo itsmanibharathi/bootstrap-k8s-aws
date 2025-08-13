@@ -47,23 +47,6 @@ variable "jumpbox_ssh_cidr" {
   type        = string
 }
 
-variable "jumpbox_key_name" {
-  description = "Existing AWS key pair name for the jumpbox"
-  type        = string
-  default     = "jumpbox-key"
-}
-
-variable "controlplane_key_name" {
-  description = "Existing AWS key pair name for control plane nodes"
-  type        = string
-  default     = "controlnode-key"
-}
-
-variable "workernode_key_name" {
-  description = "Existing AWS key pair name for worker nodes"
-  type        = string
-  default     = "workernode-key"
-}
 
 variable "jumpbox_instance_type" {
   description = "Instance type for jumpbox"
@@ -114,4 +97,16 @@ locals {
     Project = var.project_name
     owner   = "mani"
   }
+}
+
+variable "jumpbox_key_path" {
+  default = "ssh/jumpbox-key.pub"
+}
+
+variable "controlplane_key_path" {
+  default = "ssh/controlplane-key.pub"
+}
+
+variable "workernode_key_path" {
+  default = "ssh/workernode-key.pub"
 }

@@ -10,7 +10,7 @@ variable "public_subnet_id" {
 
 variable "private_subnet_ids" {
   type        = list(string)
-  description = "Private subnet IDs for control plane and workers (3)"
+  description = "Private subnet IDs"
 }
 
 variable "jumpbox_sg_id" {
@@ -28,15 +28,15 @@ variable "worker_sg_id" {
   description = "Security group ID for worker nodes"
 }
 
-variable "jumpbox_key_name" {
+variable "jumpbox_key_path" {
   type = string
 }
 
-variable "controlplane_key_name" {
+variable "controlplane_key_path" {
   type = string
 }
 
-variable "workernode_key_name" {
+variable "workernode_key_path" {
   type = string
 }
 
@@ -61,16 +61,6 @@ variable "tags" {
   description = "Common tags"
   default     = {}
 }
-
-
-
-variable "ctrl" {
-  type        = bool
-  description = "Prevent destroy of control plane nodes"
-  default     = true
-
-}
-
 
 data "aws_ami" "debian_12" {
   most_recent = true

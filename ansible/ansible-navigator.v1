@@ -1,0 +1,25 @@
+---
+ansible-navigator:
+  ansible:
+    config: ./ansible.cfg
+    inventory:
+      entries:
+      - ./inventory.ini
+  execution-environment:
+    container-engine: podman
+    enabled: true
+    image: quay.io/ansible/creator-ee:latest
+    pull:
+      policy: missing
+    volume-mounts:
+      - src: ../ssh
+        dest: ../ssh
+        options: Z     
+  logging:
+    append: true
+    file: ./ansible-navigator.log
+    level: info
+  mode: interactive
+  playbook-artifact:
+    enable: true
+    save-as: ./artifacts/{playbook_name}-{time_stamp}.json

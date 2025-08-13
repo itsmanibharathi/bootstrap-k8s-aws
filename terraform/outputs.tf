@@ -1,3 +1,8 @@
+output "jumpbox_name" {
+  description = "Name of the Jump Host"
+  value       = module.ec2_instances.jumpbox_name
+  
+}
 output "jumpbox_public_ip" {
   description = "Public IP address of the Jump Host"
   value       = module.ec2_instances.jumpbox_public_ip

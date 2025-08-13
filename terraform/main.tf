@@ -29,9 +29,9 @@ module "ec2_instances" {
   jumpbox_sg_id              = module.security_groups.jumpbox_sg_id
   control_plane_sg_id        = module.security_groups.control_plane_sg_id
   worker_sg_id               = module.security_groups.worker_sg_id
-  jumpbox_key_name           = var.jumpbox_key_name
-  controlplane_key_name      = var.controlplane_key_name
-  workernode_key_name        = var.workernode_key_name
+  jumpbox_key_path           = var.jumpbox_key_path
+  controlplane_key_path      = var.controlplane_key_path
+  workernode_key_path        = var.workernode_key_path
   jumpbox_instance_type      = var.jumpbox_instance_type
   controlplane_instance_type = var.controlplane_instance_type
   workernode_instance_type   = var.workernode_instance_type

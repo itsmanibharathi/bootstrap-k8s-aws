@@ -1,0 +1,31 @@
+Host jumpbox
+    HostName 3.230.147.14
+    User root
+    IdentityFile ~/.ssh/jumpbox-key
+    StrictHostKeyChecking no
+    ForwardAgent yes
+
+# ===================
+# Control Plane Nodes
+# ===================
+Host k8s-ha-cluster-cp-1 cp-1
+    HostName 10.0.2.213
+    User root
+    IdentityFile ~/.ssh/controlnode-key
+    StrictHostKeyChecking no
+    ProxyJump jumpbox
+
+Host k8s-ha-cluster-cp-2 cp-2
+    HostName 10.0.3.237
+    User root
+    IdentityFile ~/.ssh/controlnode-key
+    StrictHostKeyChecking no
+    ProxyJump jumpbox
+
+
+Host k8s-ha-cluster-cp-3 cp-3
+    HostName 10.0.4.76
+    User root
+    IdentityFile ~/.ssh/controlnode-key
+    StrictHostKeyChecking no
+    ProxyJump jumpbox
