@@ -1,0 +1,6 @@
+---
+- name: Deploy CNI network plugin
+  hosts: all
+  become: yes
+  roles:
+    - network

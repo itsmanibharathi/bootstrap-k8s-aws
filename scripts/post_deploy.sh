@@ -20,7 +20,7 @@ SSH_REMOTE_PATH="~/.ssh"
 TERRAFORM_DIR="$REPO_ROOT/terraform"
 ANSIBLE_DIR="$REPO_ROOT/ansible"
 SSH_DIR="$REPO_ROOT/ssh"
-
+LB_DNS="api.k8s.local"
 # --- ansible output ---
 
 echo "🔍 Fetching Terraform outputs..."
@@ -36,25 +36,62 @@ WORKER_NAMES=($(echo "$TF_OUTPUT" | jq -r '.worker_names.value[]'))
 WORKER_PRIVATE_IP=($(echo "$TF_OUTPUT" | jq -r '.worker_private_ips.value[]'))
 
 # --- Ansible inventory ---
+# ANSIBLE_INVENTORY_FILE="$ANSIBLE_DIR/inventory.ini"
+# echo "🔧 Generating Ansible inventory at $ANSIBLE_INVENTORY_FILE..."
+
+# cat > "$ANSIBLE_INVENTORY_FILE" <<EOF
+# [jumpbox]
+# $JUMPBOX_NAME
+
+# [control_plane]
+# $(
+# for i in "${!CONTROL_NAMES[@]}"; do
+#   echo "${CONTROL_NAMES[$i]}"
+# done)
+
+# [worker_nodes]
+# $(
+# for i in "${!WORKER_NAMES[@]}"; do
+#   echo "${WORKER_NAMES[$i]}"
+# done)
+
+# EOF
+
+
+# --- Ansible inventory ---
 ANSIBLE_INVENTORY_FILE="$ANSIBLE_DIR/inventory.ini"
 echo "🔧 Generating Ansible inventory at $ANSIBLE_INVENTORY_FILE..."
 
 cat > "$ANSIBLE_INVENTORY_FILE" <<EOF
 [jumpbox]
-$JUMPBOX_NAME
+${JUMPBOX_NAME} private_ip=${JUMPBOX_PRIVATE_IP}
+
+[lb]
+${JUMPBOX_NAME} private_ip=${JUMPBOX_PRIVATE_IP}
 
 [control_plane]
 $(
 for i in "${!CONTROL_NAMES[@]}"; do
-  echo "${CONTROL_NAMES[$i]}"
+  NAME="${CONTROL_NAMES[$i]}"
+  IP="${CONTROL_PRIVATE_IP[$i]}"
+  echo "${NAME} private_ip=${IP}"
 done)
 
 [worker_nodes]
 $(
 for i in "${!WORKER_NAMES[@]}"; do
-  echo "${WORKER_NAMES[$i]}"
+  NAME="${WORKER_NAMES[$i]}"
+  IP="${WORKER_PRIVATE_IP[$i]}"
+  echo "${NAME} private_ip=${IP}"
 done)
 
+[all:vars]
+cluster_domain=k8s.local
+service_cidr=10.32.0.0/24
+kubernetes_service_ip=10.32.0.1
+pod_cidr=10.200.0.0/16
+pki_dir=/etc/kubernetes/pki
+cfssl_bin_dir=/usr/local/bin
 EOF
 
 
@@ -117,6 +154,39 @@ CONFIG_FILE=$(mktemp)
 ssh_config "$SSH_LOCAL_PATH" true > $SSH_LOCAL_PATH/config
 
 ssh_config "$SSH_REMOTE_PATH" false > $CONFIG_FILE
+
+# --- Copy SSH config to remote hosts ---
+copy_ssh_config() {
+  local host="$1"
+  local user="$2"
+  local remote_path="$3"
+
+  echo "📂 Copying SSH config to $host..."
+  scp -o StrictHostKeyChecking=no -i "${SSH_LOCAL_PATH}/${JUMPBOX_KEY_NAME}" "$CONFIG_FILE" "${user}@${host}:${remote_path}/config"
+}
+
+# Copy SSH config to jumpbox
+copy_ssh_config "$JUMPBOX_IP" "$EXUSION_USER" "$SSH_REMOTE_PATH"
+
+# --- Copy SSH keys to remote hosts ---
+
+copy_ssh_keys() {
+  local host="$1"
+  local user="$2"
+  local key_name="$3"
+  local remote_path="$4"
+  local local_key_path="${SSH_LOCAL_PATH}/$5"
+
+  echo "🔑 Copying SSH key $key_name to $host..."
+  scp -o StrictHostKeyChecking=no -i "${SSH_LOCAL_PATH}/${key_name}" "${local_key_path}" "${user}@${host}:${remote_path}/"
+}
+
+# Copy keys to jumpbox
+copy_ssh_keys "$JUMPBOX_IP" "$EXUSION_USER" "$JUMPBOX_KEY_NAME" "$SSH_REMOTE_PATH" "$CONTROL_KEY_NAME"
+copy_ssh_keys "$JUMPBOX_IP" "$EXUSION_USER" "$JUMPBOX_KEY_NAME" "$SSH_REMOTE_PATH" "$WORKER_KEY_NAME"
+
+
+
 
 
 

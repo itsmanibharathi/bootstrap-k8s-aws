@@ -1,0 +1,6 @@
+---
+- name: Deploy Kubernetes worker nodes
+  hosts: workers
+  become: yes
+  roles:
+    - workers

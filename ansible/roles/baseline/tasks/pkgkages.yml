@@ -1,0 +1,17 @@
+---
+- name: Ensure base packages are installed
+  apt:
+    name:
+      - curl
+      - wget
+      - socat
+      - conntrack
+      - iptables
+      - ebtables
+      - ethtool
+      - apt-transport-https
+      - ca-certificates
+      - gnupg
+      - openssl
+    state: present
+    update_cache: yes

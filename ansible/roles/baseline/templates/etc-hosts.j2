@@ -1,0 +1,24 @@
+127.0.0.1       localhost
+::1             localhost ip6-localhost ip6-loopback
+ff02::1         ip6-allnodes
+ff02::2         ip6-allrouters
+
+# === Jump box ===
+{% for h in groups['jumpbox'] %}
+{{ hostvars[h].private_ip }} jumpbox.{{ cluster_domain }} jumpbox
+{% endfor %}
+
+# === Kubernetes Cluster Nodes ===
+{% for h in groups['lb'] %}
+{{ hostvars[h].private_ip }} api.{{ cluster_domain }} api
+{% endfor %}
+
+##### Control Plane Nodes #####
+{% for h in groups['control_plane'] %}
+{{ hostvars[h].private_ip }} {{ h | regex_replace('k8s-ha-cluster-cp-', 'cp') }}.{{ cluster_domain }} {{ h | regex_replace('k8s-ha-cluster-cp-', 'cp') }}
+{% endfor %}
+
+##### Worker Nodes #####
+{% for h in groups['worker_nodes'] %}
+{{ hostvars[h].private_ip }} {{ h | regex_replace('k8s-ha-cluster-worker-', 'worker') }}.{{ cluster_domain }} {{ h | regex_replace('k8s-ha-cluster-worker-', 'worker') }}
+{% endfor %}

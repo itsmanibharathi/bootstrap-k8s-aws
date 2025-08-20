@@ -1,0 +1,10 @@
+---
+k8s_version: "1.28.0"
+containerd_version: "1.7.0"
+etcd_version: "3.5.9"
+cni_version: "1.3.0"
+
+download_urls:
+  kubernetes: "https://dl.k8s.io/v{{ k8s_version }}/bin/linux/amd64"
+  etcd: "https://github.com/etcd-io/etcd/releases/download/v{{ etcd_version }}"
+  containerd: "https://github.com/containerd/containerd/releases/download/v{{ containerd_version }}"

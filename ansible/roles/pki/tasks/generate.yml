@@ -1,0 +1,209 @@
+# ---- Build cluster facts from inventory (robust) ----
+
+# 1) Base groups
+- name: Build base cluster groups
+  set_fact:
+    cp_hosts: "{{ groups.control_plane | default([]) }}"
+    lb_hosts: "{{ groups.lb | default([]) }}"
+
+# 2) Derived lists from hosts
+- name: Build host-derived lists
+  set_fact:
+    cp_ips:   "{{ cp_hosts | map('extract', hostvars, 'private_ip') | list }}"
+    lb_ips:   "{{ lb_hosts | map('extract', hostvars, 'private_ip') | list }}"
+    cp_fqdns: "{{ cp_hosts | map('regex_replace', '(.*)', '\\1.' ~ cluster_domain) | list }}"
+
+# 3) Base DNS lists (separate task so they're available to the next one)
+- name: Build base DNS lists
+  set_fact:
+    api_dns:
+      - "api.{{ cluster_domain }}"
+    k8s_dns:
+      - "kubernetes"
+      - "kubernetes.default"
+      - "kubernetes.default.svc"
+      - "kubernetes.default.svc.{{ cluster_domain }}"
+
+# 4) Final SAN sets (now can safely reference everything)
+- name: Build apiserver SAN sets
+  set_fact:
+    apiserver_hosts: "{{ ['127.0.0.1', kubernetes_service_ip] + cp_ips + lb_ips }}"
+    apiserver_dns:   "{{ api_dns + k8s_dns + cp_hosts + cp_fqdns }}"
+
+
+# ---- Core CA + config ----
+- name: Render CA CSR
+  template:
+    src: ca-csr.json.j2
+    dest: "{{ pki_outdir }}/ca-csr.json"
+    mode: "0644"
+
+- name: Render CA config
+  template:
+    src: ca-config.json.j2
+    dest: "{{ pki_outdir }}/ca-config.json"
+    mode: "0644"
+
+- name: Generate Kubernetes Root CA
+  shell: >
+    cfssl gencert -initca ca-csr.json | cfssljson -bare ca
+  args:
+    chdir: "{{ pki_outdir }}"
+    creates: "{{ pki_outdir }}/ca.pem"
+
+# ---- Front-proxy CA ----
+- name: Render Front-Proxy CA CSR
+  template:
+    src: front-proxy-ca-csr.json.j2
+    dest: "{{ pki_outdir }}/front-proxy-ca-csr.json"
+    mode: "0644"
+
+- name: Generate Front-Proxy CA
+  shell: >
+    cfssl gencert -initca front-proxy-ca-csr.json | cfssljson -bare front-proxy-ca
+  args:
+    chdir: "{{ pki_outdir }}"
+    creates: "{{ pki_outdir }}/front-proxy-ca.pem"
+
+# ---- Service Account signing keys ----
+- name: Ensure SA dir exists
+  file:
+    path: "{{ pki_outdir }}/service-accounts"
+    state: directory
+    mode: "0700"
+
+- name: Generate SA private key
+  shell: "openssl genrsa -out service-accounts/service-accounts.key 4096"
+  args:
+    chdir: "{{ pki_outdir }}"
+    creates: "{{ pki_outdir }}/service-accounts/service-accounts.key"
+
+- name: Generate SA public key
+  shell: "openssl rsa -in service-accounts/service-accounts.key -pubout -out service-accounts/service-accounts.pub"
+  args:
+    chdir: "{{ pki_outdir }}"
+    creates: "{{ pki_outdir }}/service-accounts/service-accounts.pub"
+
+# ---- etcd per-node peer/server certs ----
+
+- name: Create etcd per-node dirs
+  when: (cp_hosts | default([])) | length > 0
+  file:
+    path: "{{ pki_outdir }}/etcd-{{ item }}"
+    state: directory
+    mode: "0700"
+  loop: "{{ cp_hosts | default([]) }}"
+
+- name: Render etcd node CSR JSON
+  when: (cp_hosts | default([])) | length > 0
+  template:
+    src: etcd-node.json.j2
+    dest: "{{ pki_outdir }}/etcd-{{ item }}/csr.json"
+    mode: "0644"
+  loop: "{{ cp_hosts | default([]) }}"
+  vars:
+    node_ip:  "{{ hostvars[item].private_ip }}"
+    node_name: "{{ item }}"
+    node_fqdn: "{{ item }}.{{ cluster_domain }}"
+
+- name: Generate etcd node cert (peer/server profile)
+  when: (cp_hosts | default([])) | length > 0
+  shell: >
+    cfssl gencert -ca=ca.pem -ca-key=ca-key.pem -config=ca-config.json -profile=peer
+    etcd-{{ item }}/csr.json | cfssljson -bare etcd-{{ item }}
+  args:
+    chdir: "{{ pki_outdir }}"
+    creates: "{{ pki_outdir }}/etcd-{{ item }}/etcd-{{ item }}.pem"
+  loop: "{{ cp_hosts | default([]) }}"
+
+# ---- kube-apiserver serving cert ----
+- name: Ensure apiserver dir exists
+  file:
+    path: "{{ pki_outdir }}/kube-apiserver"
+    state: directory
+    mode: "0700"
+
+- name: Render apiserver CSR JSON (with full SANs)
+  template:
+    src: apiserver.json.j2
+    dest: "{{ pki_outdir }}/kube-apiserver/csr.json"
+    mode: "0644"
+
+- name: Generate kube-apiserver serving cert
+  shell: >
+    cfssl gencert -ca=ca.pem -ca-key=ca-key.pem -config=ca-config.json -profile=server
+    kube-apiserver/csr.json | cfssljson -bare kube-apiserver
+  args:
+    chdir: "{{ pki_outdir }}"
+    creates: "{{ pki_outdir }}/kube-apiserver/kube-apiserver.pem"
+
+
+# ---- apiserver -> kubelet client cert ----
+- name: Render apiserver-kubelet client CSR
+  template:
+    src: apiserver-kubelet-client.json.j2
+    dest: "{{ pki_outdir }}/apiserver-kubelet-client.json"
+    mode: "0644"
+
+- name: Generate apiserver-kubelet client cert
+  shell: >
+    cfssl gencert -ca=ca.pem -ca-key=ca-key.pem -config=ca-config.json -profile=client
+    apiserver-kubelet-client.json | cfssljson -bare apiserver-kubelet-client
+  args:
+    chdir: "{{ pki_outdir }}"
+    creates: "{{ pki_outdir }}/apiserver-kubelet-client.pem"
+
+# ---- front-proxy client cert ----
+- name: Render front-proxy client CSR
+  template:
+    src: front-proxy-client.json.j2
+    dest: "{{ pki_outdir }}/front-proxy-client.json"
+    mode: "0644"
+
+- name: Generate front-proxy client cert
+  shell: >
+    cfssl gencert -ca=front-proxy-ca.pem -ca-key=front-proxy-ca-key.pem -config=ca-config.json -profile=client
+    front-proxy-client.json | cfssljson -bare front-proxy-client
+  args:
+    chdir: "{{ pki_outdir }}"
+    creates: "{{ pki_outdir }}/front-proxy-client.pem"
+
+# ---- controller-manager, scheduler, admin client certs ----
+- name: Render component client CSRs
+  template:
+    src: "{{ item.src }}"
+    dest: "{{ pki_outdir }}/{{ item.dest }}"
+    mode: "0644"
+  loop:
+    - { src: "controller-manager.json.j2", dest: "controller-manager.json" }
+    - { src: "scheduler.json.j2",         dest: "scheduler.json" }
+    - { src: "admin.json.j2",             dest: "admin.json" }
+
+- name: Generate component client certs
+  shell: >
+    cfssl gencert -ca=ca.pem -ca-key=ca-key.pem -config=ca-config.json -profile=client
+    {{ item }}.json | cfssljson -bare {{ "kube-" + item if item != "admin" else "admin" }}
+  args:
+    chdir: "{{ pki_outdir }}"
+  loop:
+    - controller-manager
+    - scheduler
+    - admin
+  register: gen_components
+  changed_when: false
+
+# ---- (Optional) etcdctl / apiserver etcd client cert ----
+- name: Render etcd client CSR
+  copy:
+    dest: "{{ pki_outdir }}/etcd-client.json"
+    mode: "0644"
+    content: |
+      { "CN":"etcd-client", "key":{"algo":"rsa","size":4096}, "names":[{"O":"etcd-clients"}] }
+
+- name: Generate etcd client cert
+  shell: >
+    cfssl gencert -ca=ca.pem -ca-key=ca-key.pem -config=ca-config.json -profile=client
+    etcd-client.json | cfssljson -bare etcd-client
+  args:
+    chdir: "{{ pki_outdir }}"
+    creates: "{{ pki_outdir }}/etcd-client.pem"

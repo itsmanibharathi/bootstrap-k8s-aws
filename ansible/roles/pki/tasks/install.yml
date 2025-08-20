@@ -1,0 +1,20 @@
+- name: Ensure output directory exists
+  file:
+    path: "{{ pki_outdir }}"
+    state: directory
+    mode: "0700"
+
+- name: Install cfssl and cfssljson (v1.6.4)
+  get_url:
+    url: "{{ item.url }}"
+    dest: "/usr/local/bin/{{ item.name }}"
+    mode: "0755"
+  loop:
+    - { name: "cfssl",     url: "https://github.com/cloudflare/cfssl/releases/download/v1.6.4/cfssl_1.6.4_linux_amd64" }
+    - { name: "cfssljson", url: "https://github.com/cloudflare/cfssl/releases/download/v1.6.4/cfssljson_1.6.4_linux_amd64" }
+
+- name: Ensure openssl present (best-effort)
+  package:
+    name: openssl
+    state: present
+  ignore_errors: yes
