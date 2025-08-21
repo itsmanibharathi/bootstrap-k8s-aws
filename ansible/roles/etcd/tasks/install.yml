@@ -1,0 +1,44 @@
+---
+- name: Create etcd group
+  group:
+    name: "{{ etcd_group }}"
+    system: yes
+
+- name: Create etcd user
+  user:
+    name: "{{ etcd_user }}"
+    group: "{{ etcd_group }}"
+    system: yes
+    shell: /bin/false
+    home: "{{ etcd_data_dir }}"
+    create_home: no
+
+- name: Create etcd directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ etcd_user }}"
+    group: "{{ etcd_group }}"
+    mode: "0750"
+  loop:
+    - "{{ etcd_data_dir }}"
+    - "{{ etcd_config_dir }}"
+    - "{{ etcd_cert_dir }}"
+
+- name: Download and extract etcd
+  unarchive:
+    src: "{{ etcd_download_url }}"
+    dest: /tmp
+    remote_src: yes
+    creates: "/tmp/etcd-v{{ etcd_version }}-linux-amd64"
+
+- name: Install etcd binaries
+  copy:
+    src: "/tmp/etcd-v{{ etcd_version }}-linux-amd64/{{ item }}"
+    dest: "{{ etcd_bin_dir }}/{{ item }}"
+    mode: "0755"
+    remote_src: yes
+  loop:
+    - etcd
+    - etcdctl
+  notify: restart etcd

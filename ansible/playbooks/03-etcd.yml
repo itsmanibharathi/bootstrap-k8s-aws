@@ -1,6 +1,6 @@
 ---
 - name: Deploy etcd cluster
-  hosts: controlplane
+  hosts: control_plane
   become: yes
   roles:
     - etcd

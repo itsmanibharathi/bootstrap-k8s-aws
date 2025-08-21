@@ -13,11 +13,11 @@ This Ansible playbook collection sets up a production-ready Kubernetes multi-mas
 ```
 [Users] → [Jumpbox: HAProxy] → [Control Plane 1,2,3] ← → [Worker Nodes]
               ↓                      ↓                        ↓
-    [Load Balancer: 6443]      [ALL Components]         [Node Components]
-    [PKI Certificates]         [API + Scheduler]        [kubelet]
-                              [Controller + etcd]       [kube-proxy]
-                              [kubelet + kube-proxy]    [containerd]
-                              [containerd + cilium]     [cilium-agent]
+    [Load Balancer: 6443]      [etcd Cluster]           [Node Components]
+    [PKI Certificates]         [kube-apiserver]         [kubelet]
+                              [kube-controller-mgr]     [kube-proxy]
+                              [kube-scheduler]          [containerd]
+                              [kubelet + containerd]    [CNI]
 ```
 
 ## Network Configuration
@@ -48,29 +48,26 @@ This Ansible playbook collection sets up a production-ready Kubernetes multi-mas
 
 ### 3. Run Individual Phases
 ```bash
-# Phase 1: PKI Setup
-ansible-navigator run playbooks/01-pki-setup.yml -i inventory.ini
+# Phase 1: Baseline Setup
+ansible-navigator run playbooks/01-baseline.yml -i inventory.ini
 
-# Phase 2: HAProxy Setup
-ansible-navigator run playbooks/02-haproxy-setup.yml -i inventory.ini
+# Phase 2: PKI Setup
+ansible-navigator run playbooks/02-pki.yml -i inventory.ini
 
-# Phase 3: Base Nodes
-ansible-navigator run playbooks/03-base-nodes.yml -i inventory.ini
+# Phase 3: etcd Cluster
+ansible-navigator run playbooks/03-etcd.yml -i inventory.ini
 
-# Phase 4: Control Plane
-ansible-navigator run playbooks/04-control-plane.yml -i inventory.ini
+# Phase 4: Control Plane Components
+ansible-navigator run playbooks/04-controlplane.yml -i inventory.ini
 
-# Phase 5: Workers (if any)
-ansible-navigator run playbooks/05-worker-join.yml -i inventory.ini
+# Phase 5: Worker Nodes
+ansible-navigator run playbooks/05-workers.yml -i inventory.ini
 
-# Phase 6: Cilium CNI
-ansible-navigator run playbooks/06-cilium-cni.yml -i inventory.ini
+# Phase 6: Network (CNI)
+ansible-navigator run playbooks/06-network.yml -i inventory.ini
 
-# Phase 7: Security
-ansible-navigator run playbooks/07-security-setup.yml -i inventory.ini
-
-# Phase 8: Observability
-ansible-navigator run playbooks/08-observability.yml -i inventory.ini
+# Phase 7: Add-ons
+ansible-navigator run playbooks/07-addons.yml -i inventory.ini
 ```
 
 ## Post-Installation

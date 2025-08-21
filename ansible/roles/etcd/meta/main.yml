@@ -1,0 +1,18 @@
+---
+galaxy_info:
+  author: K8s Multi-Master Setup
+  description: etcd cluster setup for Kubernetes multi-master
+  min_ansible_version: 2.9
+  platforms:
+    - name: Ubuntu
+      versions:
+        - focal
+        - jammy
+    - name: EL
+      versions:
+        - 8
+        - 9
+
+# dependencies:
+#   - role: pki
+#     when: pki_setup_required | default(true)

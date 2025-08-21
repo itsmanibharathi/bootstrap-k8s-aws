@@ -1,0 +1,15 @@
+---
+# Build etcd cluster members from inventory
+etcd_initial_cluster: >-
+  {%- set cluster_members = [] -%}
+  {%- for host in groups['control_plane'] -%}
+    {%- set member = host + "=https://" + hostvars[host]['private_ip'] + ":" + etcd_peer_port|string -%}
+    {%- set _ = cluster_members.append(member) -%}
+  {%- endfor -%}
+  {{ cluster_members | join(',') }}
+
+# Current node URLs
+etcd_listen_client_urls: "https://{{ private_ip }}:{{ etcd_client_port }},https://127.0.0.1:{{ etcd_client_port }}"
+etcd_advertise_client_urls: "https://{{ private_ip }}:{{ etcd_client_port }}"
+etcd_listen_peer_urls: "https://{{ private_ip }}:{{ etcd_peer_port }}"
+etcd_initial_advertise_peer_urls: "https://{{ private_ip }}:{{ etcd_peer_port }}"

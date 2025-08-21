@@ -1,0 +1,12 @@
+---
+- name: Import installation tasks
+  import_tasks: install.yml
+  tags: [etcd, install]
+
+- name: Import configuration tasks
+  import_tasks: configure.yml
+  tags: [etcd, configure]
+
+- name: Import service tasks
+  import_tasks: service.yml
+  tags: [etcd, service]
