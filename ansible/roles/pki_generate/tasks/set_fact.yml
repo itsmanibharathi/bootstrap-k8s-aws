@@ -8,24 +8,24 @@
 # 2) Derived lists from hosts
 - name: Build host-derived lists
   set_fact:
-    cp_ips:   "{{ cp_hosts | map('extract', hostvars, 'private_ip') | list }}"
-    lb_ips:   "{{ lb_hosts | map('extract', hostvars, 'private_ip') | list }}"
-    cp_fqdns: "{{ cp_hosts | map('regex_replace', '(.*)', '\\1.' ~ cluster_domain) | list }}"
+    cp_ips:   "{{ cp_hosts | map('extract', hostvars, 'private_ip') | map('default', '') | list }}"
+    lb_ips:   "{{ lb_hosts | map('extract', hostvars, 'private_ip') | map('default', '') | list }}"
+    cp_fqdns: "{{ cp_hosts | map('regex_replace', '(.*)', '\\1.' ~ (cluster_domain | default('cluster.local'))) | list }}"
 
 # 3) Base DNS lists (separate task so they're available to the next one)
 - name: Build base DNS lists
   set_fact:
     api_dns:
-      - "api.{{ cluster_domain }}"
+      - "api.{{ cluster_domain | default('cluster.local') }}"
     k8s_dns:
       - "kubernetes"
       - "kubernetes.default"
       - "kubernetes.default.svc"
-      - "kubernetes.default.svc.{{ cluster_domain }}"
+      - "kubernetes.default.svc.{{ cluster_domain | default('cluster.local') }}"
 
 # 4) Final SAN sets (now can safely reference everything)
 - name: Build apiserver SAN sets
   set_fact:
-    apiserver_hosts: "{{ ['127.0.0.1', kubernetes_service_ip] + cp_ips + lb_ips }}"
-    apiserver_dns:   "{{ api_dns + k8s_dns + cp_hosts + cp_fqdns }}"
+    apiserver_hosts: "{{ ['127.0.0.1', kubernetes_service_ip | default('10.96.0.1')] + (cp_ips | default([])) + (lb_ips | default([])) }}"
+    apiserver_dns:   "{{ (api_dns | default([])) + (k8s_dns | default([])) + (cp_hosts | default([])) + (cp_fqdns | default([])) }}"
 

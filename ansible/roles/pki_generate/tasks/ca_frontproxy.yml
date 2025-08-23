@@ -4,6 +4,8 @@
     src: front-proxy-ca-csr.json.j2
     dest: "{{ k8s_pki_dir }}/front-proxy-ca-csr.json"
     mode: "0644"
+    owner: root
+    group: root
 
 - name: Generate front-proxy CA cert
   shell: >
@@ -11,6 +13,18 @@
   args:
     chdir: "{{ k8s_pki_dir }}"
     creates: "{{ k8s_pki_dir }}/front-proxy-ca.pem"
+  register: front_proxy_ca_result
+  failed_when: front_proxy_ca_result.rc != 0 or 'error' in (front_proxy_ca_result.stderr | default(''))
+
+- name: Validate front-proxy CA generation
+  stat:
+    path: "{{ item }}"
+  register: front_proxy_ca_files
+  failed_when: not front_proxy_ca_files.stat.exists
+  loop:
+    - "{{ k8s_pki_dir }}/front-proxy-ca.pem"
+    - "{{ k8s_pki_dir }}/front-proxy-ca-key.pem"
+  when: front_proxy_ca_result is succeeded
 
 # ---- front-proxy client cert ----
 - name: Render front-proxy client CSR
@@ -20,9 +34,15 @@
     mode: "0644"
 
 - name: Generate front-proxy client cert
-  shell: >
-    cfssl gencert -ca={{ k8s_pki_dir }}/front-proxy-ca.pem -ca-key={{ k8s_pki_dir }}/front-proxy-ca-key.pem -config={{ k8s_pki_dir }}/ca-config.json -profile=client
-    front-proxy-client.json | cfssljson -bare front-proxy-client
+  shell: |
+    cfssl gencert \
+      -ca=front-proxy-ca.pem \
+      -ca-key=front-proxy-ca-key.pem \
+      -config=ca-config.json \
+      -profile=client \
+      front-proxy-client.json | cfssljson -bare front-proxy-client
   args:
     chdir: "{{ k8s_pki_dir }}"
     creates: "{{ k8s_pki_dir }}/front-proxy-client.pem"
+  register: front_proxy_client_result
+  failed_when: front_proxy_client_result is failed

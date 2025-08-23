@@ -1,23 +1,19 @@
 # ---- kube-apiserver serving cert ----
-- name: Ensure apiserver dir exists
-  file:
-    path: "{{ k8s_pki_dir }}/kube-apiserver"
-    state: directory
-    mode: "0700"
-
 - name: Render apiserver CSR JSON (with full SANs)
   template:
     src: apiserver.json.j2
-    dest: "{{ k8s_pki_dir }}/kube-apiserver/csr.json"
+    dest: "{{ k8s_pki_dir }}/apiserver-csr.json"
     mode: "0644"
 
 - name: Generate kube-apiserver serving cert
   shell: >
-    cfssl gencert -ca={{ k8s_pki_dir}}/ca.pem -ca-key={{ k8s_pki_dir}}/ca-key.pem -config={{ k8s_pki_dir}}/ca-config.json -profile=server
-    kube-apiserver/csr.json | cfssljson -bare kube-apiserver
+    cfssl gencert -ca=ca.pem -ca-key=ca-key.pem -config=ca-config.json -profile=server
+    apiserver-csr.json | cfssljson -bare apiserver
   args:
     chdir: "{{ k8s_pki_dir }}"
-    creates: "{{ k8s_pki_dir }}/kube-apiserver/kube-apiserver.pem"
+    creates: "{{ k8s_pki_dir }}/apiserver.pem"
+  register: apiserver_result
+  failed_when: apiserver_result is failed
 
 
 # ---- apiserver -> kubelet client cert ----
@@ -29,11 +25,13 @@
 
 - name: Generate apiserver-kubelet client cert
   shell: >
-    cfssl gencert -ca={{ k8s_pki_dir}}/ca.pem -ca-key={{ k8s_pki_dir}}/ca-key.pem -config={{ k8s_pki_dir}}/ca-config.json -profile=client
+    cfssl gencert -ca=ca.pem -ca-key=ca-key.pem -config=ca-config.json -profile=client
     apiserver-kubelet-client.json | cfssljson -bare apiserver-kubelet-client
   args:
     chdir: "{{ k8s_pki_dir }}"
     creates: "{{ k8s_pki_dir }}/apiserver-kubelet-client.pem"
+  register: kubelet_client_result
+  failed_when: kubelet_client_result is failed
 
 
 # ---- controller-manager, scheduler, admin client certs ----
@@ -49,13 +47,14 @@
 
 - name: Generate component client certs
   shell: >
-    cfssl gencert -ca={{ k8s_pki_dir}}/ca.pem -ca-key={{ k8s_pki_dir}}/ca-key.pem -config={{ k8s_pki_dir}}/ca-config.json -profile=client
+    cfssl gencert -ca=ca.pem -ca-key=ca-key.pem -config=ca-config.json -profile=client
     {{ item }}.json | cfssljson -bare {{ "kube-" + item if item != "admin" else "admin" }}
   args:
     chdir: "{{ k8s_pki_dir }}"
+    creates: "{{ k8s_pki_dir }}/{{ 'kube-' + item if item != 'admin' else 'admin' }}.pem"
   loop:
     - controller-manager
     - scheduler
     - admin
-  register: gen_components
-  changed_when: false
+  register: component_result
+  failed_when: component_result is failed

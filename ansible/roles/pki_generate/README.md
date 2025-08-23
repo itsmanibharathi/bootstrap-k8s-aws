@@ -1,38 +1,80 @@
-Role Name
-=========
+# PKI Generate Role
 
-A brief description of the role goes here.
+This role generates all required PKI certificates for a Kubernetes cluster following security best practices.
 
-Requirements
-------------
+## Generated Certificates
 
-Any pre-requisites that may not be covered by Ansible itself or the role should be mentioned here. For instance, if the role uses the EC2 module, it may be a good idea to mention in this section that the boto package is required.
+### Root CA
+- `/etc/kubernetes/pki/ca.crt` - Root CA certificate
+- `/etc/kubernetes/pki/ca.key` - Root CA private key
 
-Role Variables
---------------
+### etcd CA (Separate)
+- `/etc/kubernetes/pki/etcd/ca.crt` - etcd CA certificate
+- `/etc/kubernetes/pki/etcd/ca.key` - etcd CA private key
 
-A description of the settable variables for this role should go here, including any variables that are in defaults/main.yml, vars/main.yml, and any variables that can/should be set via parameters to the role. Any variables that are read from other roles and/or the global scope (ie. hostvars, group vars, etc.) should be mentioned here as well.
+### API Server
+- `/etc/kubernetes/pki/apiserver.crt` - API server serving certificate
+- `/etc/kubernetes/pki/apiserver.key` - API server private key
+- `/etc/kubernetes/pki/apiserver-kubelet-client.crt` - API server to kubelet client cert
+- `/etc/kubernetes/pki/apiserver-kubelet-client.key` - API server to kubelet client key
 
-Dependencies
-------------
+### etcd Certificates
+- `/etc/kubernetes/pki/etcd/server.crt` - etcd server certificate (per node)
+- `/etc/kubernetes/pki/etcd/server.key` - etcd server private key (per node)
+- `/etc/kubernetes/pki/etcd/peer.crt` - etcd peer certificate (per node)
+- `/etc/kubernetes/pki/etcd/peer.key` - etcd peer private key (per node)
+- `/etc/kubernetes/pki/etcd/apiserver-etcd-client.crt` - API server to etcd client cert
+- `/etc/kubernetes/pki/etcd/apiserver-etcd-client.key` - API server to etcd client key
+- `/etc/kubernetes/pki/etcd/healthcheck-client.crt` - etcd healthcheck client cert
+- `/etc/kubernetes/pki/etcd/healthcheck-client.key` - etcd healthcheck client key
 
-A list of other roles hosted on Galaxy should go here, plus any details in regards to parameters that may need to be set for other roles, or variables that are used from other roles.
+### Front Proxy
+- `/etc/kubernetes/pki/front-proxy-ca.crt` - Front proxy CA certificate
+- `/etc/kubernetes/pki/front-proxy-ca.key` - Front proxy CA private key
+- `/etc/kubernetes/pki/front-proxy-client.crt` - Front proxy client certificate
+- `/etc/kubernetes/pki/front-proxy-client.key` - Front proxy client private key
 
-Example Playbook
-----------------
+### Service Account
+- `/etc/kubernetes/pki/sa.key` - Service account signing key
+- `/etc/kubernetes/pki/sa.pub` - Service account public key
 
-Including an example of how to use your role (for instance, with variables passed in as parameters) is always nice for users too:
+## Features
 
-    - hosts: servers
-      roles:
-         - { role: username.rolename, x: 42 }
+- **Separate etcd CA**: Uses dedicated CA for etcd certificates for better security isolation
+- **Proper file naming**: Converts CFSSL .pem output to Kubernetes standard .crt/.key naming
+- **Secure permissions**: Sets 0644 for certificates, 0600 for private keys, root:root ownership
+- **Error handling**: Validates certificate generation and fails on errors
+- **Idempotent**: Uses `creates` parameter to avoid regenerating existing certificates
+- **Cleanup**: Removes temporary .pem and .json files after processing
 
-License
--------
+## Requirements
 
-BSD
+- CFSSL and cfssljson installed on jumpbox
+- OpenSSL for service account key generation
+- Proper inventory with control_plane group and private_ip variables
 
-Author Information
-------------------
+## Variables
 
-An optional section for the role authors to include contact information, or a website (HTML is not allowed).
+- `k8s_pki_dir`: PKI directory (default: /etc/kubernetes/pki)
+- `k8s_pki_etcd_dir`: etcd PKI directory (default: /etc/kubernetes/pki/etcd)
+- `cluster_domain`: Cluster domain (default: cluster.local)
+- `kubernetes_service_ip`: Kubernetes service IP (default: 10.96.0.1)
+
+## Usage
+
+```yaml
+- name: Generate Kubernetes PKI
+  hosts: jumpbox
+  become: true
+  roles:
+    - pki_generate
+```
+
+## Security Best Practices
+
+- Uses 4096-bit RSA keys for all certificates
+- Separate CA for etcd isolation
+- Proper certificate profiles (server, client, peer)
+- Secure file permissions and ownership
+- Comprehensive SAN lists for API server certificates
+- Validates certificate generation success

@@ -1,0 +1,26 @@
+# ---- etcd CA (separate from root CA) ----
+- name: Render etcd CA CSR
+  template:
+    src: etcd-ca-csr.json.j2
+    dest: "{{ k8s_pki_etcd_dir }}/etcd-ca-csr.json"
+    mode: "0644"
+    owner: root
+    group: root
+
+- name: Generate etcd CA
+  shell: >
+    cfssl gencert -initca etcd-ca-csr.json | cfssljson -bare etcd-ca
+  args:
+    chdir: "{{ k8s_pki_etcd_dir }}"
+    creates: "{{ k8s_pki_etcd_dir }}/etcd-ca.pem"
+  register: etcd_ca_result
+  failed_when: etcd_ca_result is failed
+
+- name: Validate etcd CA generation
+  stat:
+    path: "{{ item }}"
+  register: etcd_ca_files
+  failed_when: not etcd_ca_files.stat.exists
+  loop:
+    - "{{ k8s_pki_etcd_dir }}/etcd-ca.pem"
+    - "{{ k8s_pki_etcd_dir }}/etcd-ca-key.pem"

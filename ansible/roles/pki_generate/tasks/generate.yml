@@ -185,12 +185,12 @@
     {{ item }}.json | cfssljson -bare {{ "kube-" + item if item != "admin" else "admin" }}
   args:
     chdir: "{{ k8s_pki_dir }}"
+    creates: "{{ k8s_pki_dir }}/{{ 'kube-' + item if item != 'admin' else 'admin' }}.pem"
   loop:
     - controller-manager
     - scheduler
     - admin
   register: gen_components
-  changed_when: false
 
 # ---- (Optional) etcdctl / apiserver etcd client cert ----
 - name: Render etcd client CSR

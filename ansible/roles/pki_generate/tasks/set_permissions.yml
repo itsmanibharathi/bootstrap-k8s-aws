@@ -1,0 +1,106 @@
+# ---- Set proper permissions and ownership ----
+- name: Set permissions for certificate files (0644)
+  file:
+    path: "{{ item }}"
+    owner: root
+    group: root
+    mode: "0644"
+  loop:
+    - "{{ k8s_pki_dir }}/ca.crt"
+    - "{{ k8s_pki_dir }}/apiserver.crt"
+    - "{{ k8s_pki_dir }}/apiserver-kubelet-client.crt"
+    - "{{ k8s_pki_dir }}/front-proxy-ca.crt"
+    - "{{ k8s_pki_dir }}/front-proxy-client.crt"
+    - "{{ k8s_pki_dir }}/sa.pub"
+    - "{{ k8s_pki_etcd_dir }}/ca.crt"
+    - "{{ k8s_pki_etcd_dir }}/server.crt"
+    - "{{ k8s_pki_etcd_dir }}/peer.crt"
+    - "{{ k8s_pki_etcd_dir }}/apiserver-etcd-client.crt"
+    - "{{ k8s_pki_etcd_dir }}/healthcheck-client.crt"
+
+- name: Set permissions for private key files (0600)
+  file:
+    path: "{{ item }}"
+    owner: root
+    group: root
+    mode: "0600"
+  loop:
+    - "{{ k8s_pki_dir }}/ca.key"
+    - "{{ k8s_pki_dir }}/apiserver.key"
+    - "{{ k8s_pki_dir }}/apiserver-kubelet-client.key"
+    - "{{ k8s_pki_dir }}/front-proxy-ca.key"
+    - "{{ k8s_pki_dir }}/front-proxy-client.key"
+    - "{{ k8s_pki_dir }}/sa.key"
+    - "{{ k8s_pki_etcd_dir }}/ca.key"
+    - "{{ k8s_pki_etcd_dir }}/server.key"
+    - "{{ k8s_pki_etcd_dir }}/peer.key"
+    - "{{ k8s_pki_etcd_dir }}/apiserver-etcd-client.key"
+    - "{{ k8s_pki_etcd_dir }}/healthcheck-client.key"
+
+- name: Set permissions for PKI directories
+  file:
+    path: "{{ item }}"
+    owner: root
+    group: root
+    mode: "0755"
+    state: directory
+  loop:
+    - "{{ k8s_pki_dir }}"
+    - "{{ k8s_pki_etcd_dir }}"
+
+- name: Remove temporary .pem files
+  file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - "{{ k8s_pki_dir }}/ca.pem"
+    - "{{ k8s_pki_dir }}/ca-key.pem"
+    - "{{ k8s_pki_dir }}/apiserver.pem"
+    - "{{ k8s_pki_dir }}/apiserver-key.pem"
+    - "{{ k8s_pki_dir }}/apiserver-kubelet-client.pem"
+    - "{{ k8s_pki_dir }}/apiserver-kubelet-client-key.pem"
+    - "{{ k8s_pki_dir }}/front-proxy-ca.pem"
+    - "{{ k8s_pki_dir }}/front-proxy-ca-key.pem"
+    - "{{ k8s_pki_dir }}/front-proxy-client.pem"
+    - "{{ k8s_pki_dir }}/front-proxy-client-key.pem"
+    - "{{ k8s_pki_dir }}/sa-key.pem"
+    - "{{ k8s_pki_dir }}/sa-pub.pem"
+    - "{{ k8s_pki_etcd_dir }}/etcd-ca.pem"
+    - "{{ k8s_pki_etcd_dir }}/etcd-ca-key.pem"
+    - "{{ k8s_pki_etcd_dir }}/apiserver-etcd-client.pem"
+    - "{{ k8s_pki_etcd_dir }}/apiserver-etcd-client-key.pem"
+    - "{{ k8s_pki_etcd_dir }}/healthcheck-client.pem"
+    - "{{ k8s_pki_etcd_dir }}/healthcheck-client-key.pem"
+
+- name: Remove temporary etcd peer .pem files
+  file:
+    path: "{{ k8s_pki_etcd_dir }}/{{ item }}"
+    state: absent
+  loop:
+    - "{{ cp_hosts[0] }}.pem"
+    - "{{ cp_hosts[0] }}-key.pem"
+  when: cp_hosts is defined and cp_hosts | length > 0
+
+- name: Remove temporary CSR files
+  file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - "{{ k8s_pki_dir }}/ca-csr.json"
+    - "{{ k8s_pki_dir }}/apiserver-csr.json"
+    - "{{ k8s_pki_dir }}/apiserver-kubelet-client.json"
+    - "{{ k8s_pki_dir }}/front-proxy-ca-csr.json"
+    - "{{ k8s_pki_dir }}/front-proxy-client.json"
+    - "{{ k8s_pki_dir }}/controller-manager.json"
+    - "{{ k8s_pki_dir }}/scheduler.json"
+    - "{{ k8s_pki_dir }}/admin.json"
+    - "{{ k8s_pki_etcd_dir }}/etcd-ca-csr.json"
+    - "{{ k8s_pki_etcd_dir }}/apiserver-etcd-client.json"
+    - "{{ k8s_pki_etcd_dir }}/healthcheck-client.json"
+
+- name: Remove etcd node CSR files
+  file:
+    path: "{{ k8s_pki_etcd_dir }}/{{ item }}-csr.json"
+    state: absent
+  loop: "{{ cp_hosts | default([]) }}"
+  when: cp_hosts is defined and cp_hosts | length > 0

@@ -1,21 +1,32 @@
 - import_tasks: set_fact.yml
-  tags:
-    - always
+  tags: [always]
+
 - import_tasks: set_dir.yml
-  tags:
-    - always
+  tags: [always]
 
 - import_tasks: ca_root.yml
   tags: [pki, ca, root_ca]
 
-- import_tasks: ca_etcd-peer.yml
-  tags: [pki, ca, etcd, peer_ca]
+- import_tasks: ca_etcd.yml
+  tags: [pki, ca, pki_etcd_ca]
 
-- import_tasks: ca_etcd-client.yml
-  tags: [pki, ca, etcd_client_ca]
+- import_tasks: ca_etcd_peer.yml
+  tags: [pki, ca, pki_etcd_peer]
+
+- import_tasks: ca_etcd_client.yml
+  tags: [pki, ca, pki_etcd_client]
 
 - import_tasks: ca_controlplane.yml
-  tags: [pki, ca, controlplane_ca]
+  tags: [pki, ca, pki_controlplane]
 
 - import_tasks: ca_frontproxy.yml
-  tags: [pki, ca, frontproxy_ca]
+  tags: [pki, ca, pki_frontproxy]
+
+- import_tasks: service_account.yml
+  tags: [pki, sa]
+
+- import_tasks: rename_files.yml
+  tags: [pki, rename]
+
+- import_tasks: set_permissions.yml
+  tags: [pki, permissions]

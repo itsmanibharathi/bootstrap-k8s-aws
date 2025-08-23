@@ -1,0 +1,87 @@
+# ---- Rename files to Kubernetes standard naming ----
+- name: Rename root CA files
+  copy:
+    src: "{{ k8s_pki_dir }}/{{ item.src }}"
+    dest: "{{ k8s_pki_dir }}/{{ item.dest }}"
+    remote_src: true
+    mode: preserve
+  loop:
+    - { src: "ca.pem", dest: "ca.crt" }
+    - { src: "ca-key.pem", dest: "ca.key" }
+
+- name: Rename etcd CA files
+  copy:
+    src: "{{ k8s_pki_etcd_dir }}/{{ item.src }}"
+    dest: "{{ k8s_pki_etcd_dir }}/{{ item.dest }}"
+    remote_src: true
+    mode: preserve
+  loop:
+    - { src: "etcd-ca.pem", dest: "ca.crt" }
+    - { src: "etcd-ca-key.pem", dest: "ca.key" }
+
+- name: Rename apiserver files
+  copy:
+    src: "{{ k8s_pki_dir }}/{{ item.src }}"
+    dest: "{{ k8s_pki_dir }}/{{ item.dest }}"
+    remote_src: true
+    mode: preserve
+  loop:
+    - { src: "apiserver.pem", dest: "apiserver.crt" }
+    - { src: "apiserver-key.pem", dest: "apiserver.key" }
+
+- name: Rename apiserver-kubelet-client files
+  copy:
+    src: "{{ k8s_pki_dir }}/{{ item.src }}"
+    dest: "{{ k8s_pki_dir }}/{{ item.dest }}"
+    remote_src: true
+    mode: preserve
+  loop:
+    - { src: "apiserver-kubelet-client.pem", dest: "apiserver-kubelet-client.crt" }
+    - { src: "apiserver-kubelet-client-key.pem", dest: "apiserver-kubelet-client.key" }
+
+- name: Rename front-proxy files
+  copy:
+    src: "{{ k8s_pki_dir }}/{{ item.src }}"
+    dest: "{{ k8s_pki_dir }}/{{ item.dest }}"
+    remote_src: true
+    mode: preserve
+  loop:
+    - { src: "front-proxy-ca.pem", dest: "front-proxy-ca.crt" }
+    - { src: "front-proxy-ca-key.pem", dest: "front-proxy-ca.key" }
+    - { src: "front-proxy-client.pem", dest: "front-proxy-client.crt" }
+    - { src: "front-proxy-client-key.pem", dest: "front-proxy-client.key" }
+
+- name: Rename service account files
+  copy:
+    src: "{{ k8s_pki_dir }}/{{ item.src }}"
+    dest: "{{ k8s_pki_dir }}/{{ item.dest }}"
+    remote_src: true
+    mode: preserve
+  loop:
+    - { src: "sa-key.pem", dest: "sa.key" }
+    - { src: "sa-pub.pem", dest: "sa.pub" }
+
+- name: Rename etcd certificates for first control plane node
+  copy:
+    src: "{{ k8s_pki_etcd_dir }}/{{ cp_hosts[0] }}{{ item.src }}"
+    dest: "{{ k8s_pki_etcd_dir }}/{{ item.dest }}"
+    remote_src: true
+    mode: preserve
+  loop:
+    - { src: ".pem", dest: "server.crt" }
+    - { src: "-key.pem", dest: "server.key" }
+    - { src: ".pem", dest: "peer.crt" }
+    - { src: "-key.pem", dest: "peer.key" }
+  when: cp_hosts is defined and cp_hosts | length > 0
+
+- name: Rename etcd client certificates
+  copy:
+    src: "{{ k8s_pki_etcd_dir }}/{{ item.src }}"
+    dest: "{{ k8s_pki_etcd_dir }}/{{ item.dest }}"
+    remote_src: true
+    mode: preserve
+  loop:
+    - { src: "apiserver-etcd-client.pem", dest: "apiserver-etcd-client.crt" }
+    - { src: "apiserver-etcd-client-key.pem", dest: "apiserver-etcd-client.key" }
+    - { src: "healthcheck-client.pem", dest: "healthcheck-client.crt" }
+    - { src: "healthcheck-client-key.pem", dest: "healthcheck-client.key" }

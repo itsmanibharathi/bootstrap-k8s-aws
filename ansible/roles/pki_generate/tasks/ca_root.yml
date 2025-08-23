@@ -4,12 +4,16 @@
     src: ca-csr.json.j2
     dest: "{{ k8s_pki_dir }}/ca-csr.json"
     mode: "0644"
+    owner: root
+    group: root
 
 - name: Render CA config
   template:
     src: ca-config.json.j2
     dest: "{{ k8s_pki_dir }}/ca-config.json"
     mode: "0644"
+    owner: root
+    group: root
 
 - name: Generate Kubernetes Root CA
   shell: >
@@ -17,6 +21,18 @@
   args:
     chdir: "{{ k8s_pki_dir }}"
     creates: "{{ k8s_pki_dir }}/ca.pem"
+  register: ca_result
+  failed_when: ca_result.rc != 0 or 'error' in (ca_result.stderr | default(''))
+
+- name: Validate Root CA generation
+  stat:
+    path: "{{ item }}"
+  register: ca_files
+  failed_when: not ca_files.stat.exists
+  loop:
+    - "{{ k8s_pki_dir }}/ca.pem"
+    - "{{ k8s_pki_dir }}/ca-key.pem"
+  when: ca_result is succeeded
 
 
 
