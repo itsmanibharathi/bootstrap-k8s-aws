@@ -1,9 +1,0 @@
-- name: Copy etcd peer/server cert + key for this node from jumpbox 
-  synchronize:
-    src: "{{ item }}"
-    dest: "{{ item }}"
-    mode: push
-  delegate_to: jumpbox
-  loop:
-    - "{{k8s_pki_etcd_dir}}/{{ inventory_hostname }}.pem"
-    - "{{k8s_pki_etcd_dir}}/{{ inventory_hostname }}-key.pem"

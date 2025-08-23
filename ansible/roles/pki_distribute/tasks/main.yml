@@ -1,11 +1,12 @@
 ---
 - import_tasks: set_dir.yml
-  tags:
-    - always
-    
-- import_tasks: ca_root.yml
-  tags: [pki, ca, root_ca]
+  tags: [always]
 
-- import_tasks: ca_etcd-peer.yml
-  tags: [pki, ca, etcd, peer_ca]
+- import_tasks: distribute_controlplane.yml
+  tags: [pki, distribute, controlplane]
+  when: inventory_hostname in groups.control_plane
+
+- import_tasks: distribute_workers.yml
+  tags: [pki, distribute, workers]
+  when: inventory_hostname in groups.worker_nodes | default([])
 

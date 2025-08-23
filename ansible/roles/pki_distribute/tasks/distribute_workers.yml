@@ -1,0 +1,27 @@
+# ---- Distribute PKI files to worker nodes ----
+
+# Only root CA certificate and service account public key needed for workers
+- name: Copy root CA certificate
+  synchronize:
+    src: "{{ k8s_pki_dir }}/ca.crt"
+    dest: "{{ k8s_pki_dir }}/ca.crt"
+    mode: push
+  delegate_to: jumpbox
+
+- name: Copy service account public key
+  synchronize:
+    src: "{{ k8s_pki_dir }}/sa.pub"
+    dest: "{{ k8s_pki_dir }}/sa.pub"
+    mode: push
+  delegate_to: jumpbox
+
+# Set permissions
+- name: Set permissions for worker PKI files
+  file:
+    path: "{{ item }}"
+    owner: root
+    group: root
+    mode: "0644"
+  loop:
+    - "{{ k8s_pki_dir }}/ca.crt"
+    - "{{ k8s_pki_dir }}/sa.pub"

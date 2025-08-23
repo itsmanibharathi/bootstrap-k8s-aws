@@ -13,7 +13,7 @@
   gather_facts: false
   tags:
     - pki
-    - pki_distribute_cp
+    - pki_distribute
   roles:
     - pki_distribute
 

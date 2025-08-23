@@ -1,0 +1,133 @@
+# ---- Distribute PKI files to control plane nodes ----
+
+# Root CA files
+- name: Copy root CA certificate
+  synchronize:
+    src: "{{ k8s_pki_dir }}/ca.crt"
+    dest: "{{ k8s_pki_dir }}/ca.crt"
+    mode: push
+  delegate_to: jumpbox
+
+- name: Copy root CA private key
+  synchronize:
+    src: "{{ k8s_pki_dir }}/ca.key"
+    dest: "{{ k8s_pki_dir }}/ca.key"
+    mode: push
+  delegate_to: jumpbox
+
+# API server certificates
+- name: Copy API server certificates
+  synchronize:
+    src: "{{ k8s_pki_dir }}/{{ item }}"
+    dest: "{{ k8s_pki_dir }}/{{ item }}"
+    mode: push
+  delegate_to: jumpbox
+  loop:
+    - apiserver.crt
+    - apiserver.key
+    - apiserver-kubelet-client.crt
+    - apiserver-kubelet-client.key
+
+# Front proxy certificates
+- name: Copy front proxy certificates
+  synchronize:
+    src: "{{ k8s_pki_dir }}/{{ item }}"
+    dest: "{{ k8s_pki_dir }}/{{ item }}"
+    mode: push
+  delegate_to: jumpbox
+  loop:
+    - front-proxy-ca.crt
+    - front-proxy-ca.key
+    - front-proxy-client.crt
+    - front-proxy-client.key
+
+# Service account keys
+- name: Copy service account keys
+  synchronize:
+    src: "{{ k8s_pki_dir }}/{{ item }}"
+    dest: "{{ k8s_pki_dir }}/{{ item }}"
+    mode: push
+  delegate_to: jumpbox
+  loop:
+    - sa.key
+    - sa.pub
+
+# etcd CA files
+- name: Copy etcd CA certificate
+  synchronize:
+    src: "{{ k8s_pki_etcd_dir }}/ca.crt"
+    dest: "{{ k8s_pki_etcd_dir }}/ca.crt"
+    mode: push
+  delegate_to: jumpbox
+
+- name: Copy etcd CA private key
+  synchronize:
+    src: "{{ k8s_pki_etcd_dir }}/ca.key"
+    dest: "{{ k8s_pki_etcd_dir }}/ca.key"
+    mode: push
+  delegate_to: jumpbox
+
+# etcd node-specific certificates
+- name: Copy etcd server certificates for this node
+  synchronize:
+    src: "{{ k8s_pki_etcd_dir }}/{{ item }}"
+    dest: "{{ k8s_pki_etcd_dir }}/{{ item }}"
+    mode: push
+  delegate_to: jumpbox
+  loop:
+    - server.crt
+    - server.key
+    - peer.crt
+    - peer.key
+
+# etcd client certificates
+- name: Copy etcd client certificates
+  synchronize:
+    src: "{{ k8s_pki_etcd_dir }}/{{ item }}"
+    dest: "{{ k8s_pki_etcd_dir }}/{{ item }}"
+    mode: push
+  delegate_to: jumpbox
+  loop:
+    - apiserver-etcd-client.crt
+    - apiserver-etcd-client.key
+    - healthcheck-client.crt
+    - healthcheck-client.key
+
+# Set permissions
+- name: Set permissions for certificate files
+  file:
+    path: "{{ item }}"
+    owner: root
+    group: root
+    mode: "0644"
+  loop:
+    - "{{ k8s_pki_dir }}/ca.crt"
+    - "{{ k8s_pki_dir }}/apiserver.crt"
+    - "{{ k8s_pki_dir }}/apiserver-kubelet-client.crt"
+    - "{{ k8s_pki_dir }}/front-proxy-ca.crt"
+    - "{{ k8s_pki_dir }}/front-proxy-client.crt"
+    - "{{ k8s_pki_dir }}/sa.pub"
+    - "{{ k8s_pki_etcd_dir }}/ca.crt"
+    - "{{ k8s_pki_etcd_dir }}/server.crt"
+    - "{{ k8s_pki_etcd_dir }}/peer.crt"
+    - "{{ k8s_pki_etcd_dir }}/apiserver-etcd-client.crt"
+    - "{{ k8s_pki_etcd_dir }}/healthcheck-client.crt"
+
+- name: Set permissions for private key files
+  file:
+    path: "{{ item }}"
+    owner: root
+    group: root
+    mode: "0600"
+  loop:
+    - "{{ k8s_pki_dir }}/ca.key"
+    - "{{ k8s_pki_dir }}/apiserver.key"
+    - "{{ k8s_pki_dir }}/apiserver-kubelet-client.key"
+    - "{{ k8s_pki_dir }}/front-proxy-ca.key"
+    - "{{ k8s_pki_dir }}/front-proxy-client.key"
+    - "{{ k8s_pki_dir }}/sa.key"
+    - "{{ k8s_pki_etcd_dir }}/ca.key"
+    - "{{ k8s_pki_etcd_dir }}/server.key"
+    - "{{ k8s_pki_etcd_dir }}/peer.key"
+    - "{{ k8s_pki_etcd_dir }}/apiserver-etcd-client.key"
+    - "{{ k8s_pki_etcd_dir }}/healthcheck-client.key"
