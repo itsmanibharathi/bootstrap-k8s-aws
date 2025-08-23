@@ -1,0 +1,17 @@
+---
+- name: Import installation tasks
+  import_tasks: install.yml
+  tags: [controlplane, install]
+
+
+- name: Import kube-apiserver tasks
+  import_tasks: apiserver.yml
+  tags: [controlplane, apiserver]
+
+- name: Import kube-controller-manager tasks
+  import_tasks: controller-manager.yml
+  tags: [controlplane, controller-manager]
+
+- name: Import kube-scheduler tasks
+  import_tasks: scheduler.yml
+  tags: [controlplane, scheduler]

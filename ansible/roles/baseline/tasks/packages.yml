@@ -10,8 +10,7 @@
       - ebtables
       - ethtool
       - apt-transport-https
-      - ca-certificates
       - gnupg
-      - openssl
+      - rsync
     state: present
     update_cache: yes

@@ -1,0 +1,20 @@
+[Unit]
+Description=Kubernetes Scheduler
+Documentation=https://github.com/kubernetes/kubernetes
+After=network.target
+
+[Service]
+Type=notify
+User={{ kube_user }}
+Group={{ kube_group }}
+ExecStart={{ kubernetes_bin_dir }}/kube-scheduler \
+  --bind-address=0.0.0.0 \
+  --kubeconfig={{ kubernetes_config_dir }}/scheduler.conf \
+  --leader-elect=true \
+  --v=2
+Restart=on-failure
+RestartSec=5
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target

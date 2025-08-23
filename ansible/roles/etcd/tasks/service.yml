@@ -11,8 +11,8 @@
     url: "https://{{ private_ip }}:{{ etcd_client_port }}/health"
     method: GET
     validate_certs: no
-    client_cert: "{{ etcd_cert_dir }}/etcd-{{ inventory_hostname }}.pem"
-    client_key: "{{ etcd_cert_dir }}/etcd-{{ inventory_hostname }}-key.pem"
+    client_cert: "{{ etcd_cert_dir }}/{{ inventory_hostname }}.pem"
+    client_key: "{{ etcd_cert_dir }}/{{ inventory_hostname }}-key.pem"
   register: etcd_health
   until: etcd_health.status == 200
   retries: 30
@@ -23,8 +23,8 @@
     ETCDCTL_API=3 {{ etcd_bin_dir }}/etcdctl \
       --endpoints=https://{{ private_ip }}:{{ etcd_client_port }} \
       --cacert={{ etcd_ca_file }} \
-      --cert={{ etcd_cert_dir }}/etcd-{{ inventory_hostname }}.pem \
-      --key={{ etcd_cert_dir }}/etcd-{{ inventory_hostname }}-key.pem \
+      --cert={{ etcd_cert_dir }}/{{ inventory_hostname }}.pem \
+      --key={{ etcd_cert_dir }}/{{ inventory_hostname }}-key.pem \
       endpoint health
   register: etcd_cluster_health
   changed_when: false

@@ -1,2 +1,8 @@
-- import_tasks: install.yml
-- import_tasks: generate.yml
+- import_tasks: set_fact.yml
+
+- import_tasks: ca_root.yml
+  tags: [pki, ca, root_ca]
+
+- import_tasks: ca_etcd_peer.yml
+  tags: [pki, ca, etcd, peer_ca]
+

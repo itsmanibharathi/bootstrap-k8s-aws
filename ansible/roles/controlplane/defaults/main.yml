@@ -1,0 +1,31 @@
+---
+# Kubernetes version
+kubernetes_version: "1.28.2"
+kubernetes_download_url: "https://dl.k8s.io/v{{ kubernetes_version }}/bin/linux/amd64"
+
+# Directories
+kubernetes_bin_dir: "/usr/local/bin"
+kubernetes_config_dir: "/etc/kubernetes"
+kubernetes_log_dir: "/var/log/kubernetes"
+
+# Service users
+kube_user: "kube"
+kube_group: "kube"
+
+# Network configuration
+service_cluster_ip_range: "{{ service_cidr }}"
+cluster_dns_ip: "{{ kubernetes_service_ip }}"
+
+# etcd endpoints
+etcd_servers: >-
+  {%- set etcd_endpoints = [] -%}
+  {%- for host in groups['control_plane'] -%}
+    {%- set endpoint = "https://" + hostvars[host]['private_ip'] + ":2379" -%}
+    {%- set _ = etcd_endpoints.append(endpoint) -%}
+  {%- endfor -%}
+  {{ etcd_endpoints | join(',') }}
+
+# Certificate paths
+
+cert_dir: "{{ cert_dir }}/ca"
+root_ca_file: "{{ cert_dir }}/ca.crt"

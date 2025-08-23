@@ -1,0 +1,25 @@
+---
+- name: Ensure cfssl is installed
+  become: true
+  ansible.builtin.package:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - golang-cfssl
+  when: ansible_os_family == "Debian"
+
+- name: Download cfssl if package is not available
+  become: true
+  ansible.builtin.get_url:
+    url: "https://github.com/cloudflare/cfssl/releases/latest/download/cfssl_linux-amd64"
+    dest: "/usr/local/bin/cfssl"
+    mode: '0755'
+  when: ansible_os_family != "Debian"
+
+- name: Download cfssljson if package is not available
+  become: true
+  ansible.builtin.get_url:
+    url: "https://github.com/cloudflare/cfssl/releases/latest/download/cfssljson_linux-amd64"
+    dest: "/usr/local/bin/cfssljson"
+    mode: '0755'
+  when: ansible_os_family != "Debian"

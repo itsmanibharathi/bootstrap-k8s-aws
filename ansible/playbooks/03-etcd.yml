@@ -2,5 +2,8 @@
 - name: Deploy etcd cluster
   hosts: control_plane
   become: yes
+  vars:
+    etcd_cert_dir: "{{ k8s_pki_etcd_dir }}"
+    etcd_ca_file: "{{ k8s_pki_dir }}/ca.crt" # root ca
   roles:
     - etcd

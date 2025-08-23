@@ -1,0 +1,28 @@
+# Front-proxy CA (for aggregation layer)
+- name: Render front-proxy CA CSR
+  template:
+    src: front-proxy-ca-csr.json.j2
+    dest: "{{ k8s_pki_dir }}/front-proxy-ca-csr.json"
+    mode: "0644"
+
+- name: Generate front-proxy CA cert
+  shell: >
+    cfssl gencert -initca front-proxy-ca-csr.json | cfssljson -bare front-proxy-ca
+  args:
+    chdir: "{{ k8s_pki_dir }}"
+    creates: "{{ k8s_pki_dir }}/front-proxy-ca.pem"
+
+# ---- front-proxy client cert ----
+- name: Render front-proxy client CSR
+  template:
+    src: front-proxy-client.json.j2
+    dest: "{{ k8s_pki_dir }}/front-proxy-client.json"
+    mode: "0644"
+
+- name: Generate front-proxy client cert
+  shell: >
+    cfssl gencert -ca={{ k8s_pki_dir }}/front-proxy-ca.pem -ca-key={{ k8s_pki_dir }}/front-proxy-ca-key.pem -config={{ k8s_pki_dir }}/ca-config.json -profile=client
+    front-proxy-client.json | cfssljson -bare front-proxy-client
+  args:
+    chdir: "{{ k8s_pki_dir }}"
+    creates: "{{ k8s_pki_dir }}/front-proxy-client.pem"

@@ -1,0 +1,46 @@
+[Unit]
+Description=Kubernetes API Server
+Documentation=https://github.com/kubernetes/kubernetes
+After=network.target
+
+[Service]
+Type=notify
+User={{ kube_user }}
+Group={{ kube_group }}
+ExecStart={{ kubernetes_bin_dir }}/kube-apiserver \
+  --advertise-address={{ private_ip }} \
+  --allow-privileged=true \
+  --authorization-mode=Node,RBAC \
+  --client-ca-file={{ cert_dir }}/ca.crt \
+  --enable-admission-plugins=NodeRestriction \
+  --enable-bootstrap-token-auth=true \
+  --etcd-servers={{ etcd_servers }} \
+  --etcd-cafile={{ etcd_cert_dir }}/ca.pem \
+  --etcd-certfile={{ etcd_cert_dir }}/etcd-{{ inventory_hostname }}.pem \
+  --etcd-keyfile={{ etcd_cert_dir }}/etcd-{{ inventory_hostname }}-key.pem \
+  --kubelet-client-certificate={{ cert_dir }}/apiserver-kubelet-client.pem \
+  --kubelet-client-key={{ cert_dir }}/apiserver-kubelet-client-key.pem \
+  --runtime-config=api/all=true \
+  --service-account-key-file={{ cert_dir }}/service-accounts.pub \
+  --service-account-signing-key-file={{ cert_dir }}/service-accounts.key \
+  --service-account-issuer=https://kubernetes.default.svc.{{ cluster_domain }} \
+  --service-cluster-ip-range={{ service_cluster_ip_range }} \
+  --service-node-port-range=30000-32767 \
+  --tls-cert-file={{ cert_dir }}/kube-apiserver.pem \
+  --tls-private-key-file={{ cert_dir }}/kube-apiserver-key.pem \
+  --requestheader-client-ca-file={{ cert_dir }}/front-proxy-ca.crt \
+  --requestheader-allowed-names=front-proxy-client \
+  --requestheader-extra-headers-prefix=X-Remote-Extra- \
+  --requestheader-group-headers=X-Remote-Group \
+  --requestheader-username-headers=X-Remote-User \
+  --proxy-client-cert-file={{ cert_dir }}/front-proxy-client.pem \
+  --proxy-client-key-file={{ cert_dir }}/front-proxy-client-key.pem \
+  --secure-port=6443 \
+  --bind-address=0.0.0.0 \
+  --v=2
+Restart=on-failure
+RestartSec=5
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target

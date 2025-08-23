@@ -2,5 +2,16 @@
 - name: Apply baseline configuration
   hosts: all
   become: yes
+  tags:
+    - baseline
   roles:
     - baseline
+  
+
+- name: Install Cfssl on jumpbox
+  hosts: jumpbox
+  become: yes
+  tags:
+    - cfssl
+  roles:
+    - cfssl_install

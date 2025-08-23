@@ -1,0 +1,6 @@
+- name: Transfer PKI files from jumpbox to target nodes
+  ansible.posix.synchronize:
+    src: "{{ k8s_pki_dir }}/ca.pem"
+    dest: "{{ k8s_pki_dir }}/ca.crt"
+    mode: push
+  delegate_to: "jumpbox"

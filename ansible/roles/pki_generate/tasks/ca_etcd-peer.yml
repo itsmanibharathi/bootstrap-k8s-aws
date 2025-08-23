@@ -1,0 +1,23 @@
+# ---- etcd per-node peer/server certs ----
+
+- name: Render etcd node CSR JSON
+  when: (cp_hosts | default([])) | length > 0
+  template:
+    src: etcd-node.json.j2
+    dest: "{{ k8s_pki_etcd_dir }}/{{ item }}-csr.json"
+    mode: "0644"
+  loop: "{{ cp_hosts | default([]) }}"
+  vars:
+    node_ip:  "{{ hostvars[item].private_ip }}"
+    node_name: "{{ item }}"
+    node_fqdn: "{{ item }}.{{ cluster_domain }}"
+
+- name: Generate etcd node cert (peer/server profile)
+  when: (cp_hosts | default([])) | length > 0
+  shell: >
+    cfssl gencert -ca={{ k8s_pki_dir}}/ca.pem -ca-key={{ k8s_pki_dir}}/ca-key.pem -config={{ k8s_pki_dir}}/ca-config.json -profile=peer
+    {{ k8s_pki_etcd_dir }}/{{ item }}-csr.json | cfssljson -bare {{ item }}
+  args:
+    chdir: "{{ k8s_pki_etcd_dir }}"
+    creates: "{{ k8s_pki_etcd_dir }}/{{ item }}.pem"
+  loop: "{{ cp_hosts | default([]) }}"

@@ -1,181 +1,206 @@
 - name: Generate Kubernetes PKI on jumpbox
   hosts: jumpbox
   become: true
-  gather_facts: false
-  vars:
-    pki_outdir: "/root/pki"       # working dir on jumpbox
-  roles:
+  tags:
     - pki
+    - pki_generate
+  roles:
+    - pki_generate
 
 - name: Distribute PKI to control planes
   hosts: control_plane
   become: true
   gather_facts: false
-  vars:
-    pki_src: "/root/pki"
-    pki_dir: "/etc/kubernetes/pki"
-  tasks:
-    - name: Ensure target directories exist
-      file:
-        path: "{{ item }}"
-        state: directory
-        mode: "0755"
-      loop:
-        - "{{ pki_dir }}"
-        - /etc/etcd
-        - /var/lib/etcd
+  tags:
+    - pki
+    - pki_distribute_cp
+  roles:
+    - pki_distribute
 
-    - name: Ensure rsync is installed on all control plane nodes
-      package:
-        name: rsync
-        state: present
-      become: yes
-    - name: Copy etcd peer/server cert + key for this node from jumpbox
-      synchronize:
-        src: "/root/pki/{{ item }}"
-        dest: "/etc/etcd/{{ item }}"
-        mode: push
-      delegate_to: jumpbox
-      loop:
-        - "etcd-{{ inventory_hostname }}.pem"
-        - "etcd-{{ inventory_hostname }}-key.pem"
-    - name: Set ownership and permissions for etcd certs
-      file:
-        path: "/etc/etcd/{{ item }}"
-        owner: root
-        group: root
-        mode: "{{ '0600' if item.endswith('-key.pem') else '0644' }}"
-      loop:
-        - "etcd-{{ inventory_hostname }}.pem"
-        - "etcd-{{ inventory_hostname }}-key.pem"
 
-    - name: Copy etcd CA (shared)
-      synchronize:
-        src: "{{ pki_src }}/ca.pem"
-        dest: /etc/etcd/ca.pem
-      delegate_to: jumpbox
 
-    - name: Set ownership and permissions for etcd CA
-      file:
-        path: /etc/etcd/ca.pem
-        owner: root
-        group: root
-        mode: "0644"  
 
-    - name: Copy etcd client cert for apiserver (optional but recommended)
-      synchronize:
-        src: "{{ pki_src }}/etcd-client{{ item.suffix }}"
-        dest: "/etc/etcd/etcd-client{{ item.suffix }}"
-        mode: push
-      loop:
-        - { suffix: ".pem",      mode: "0644" }
-        - { suffix: "-key.pem",  mode: "0600" }
-      ignore_errors: yes
-      delegate_to: jumpbox
 
-    - name: Set permissions for etcd client cert for apiserver
-      file:
-        path: "/etc/etcd/etcd-client{{ item.suffix }}"
-        owner: root
-        group: root
-        mode: "{{ item.mode }}"
-      loop:
-        - { suffix: ".pem",      mode: "0644" }
-        - { suffix: "-key.pem",  mode: "0600" }
-      ignore_errors: yes
 
-    - name: Copy kube-apiserver serving cert + key
-      synchronize:
-        src: "{{ pki_src }}/{{ item }}"
-        dest: "{{ pki_dir }}/{{ item }}"
-        mode: push
-      loop:
-        - kube-apiserver.pem
-        - kube-apiserver-key.pem
-      delegate_to: jumpbox
 
-    - name: Set permissions for kube-apiserver serving cert + key
-      file:
-        path: "{{ pki_dir }}/{{ item }}"
-        owner: root
-        group: root
-        mode: "{{ '0600' if item.endswith('-key.pem') else '0644' }}"
-      loop:
-        - kube-apiserver.pem
-        - kube-apiserver-key.pem
+# - name: Generate Kubernetes PKI on jumpbox
+#   hosts: jumpbox
+#   become: true
+#   gather_facts: false
+#   vars:
+#     pki_outdir: "/root/pki"       # working dir on jumpbox
+#   roles:
+#     - pki
 
-    - name: Copy component client certs/keys
-      synchronize:
-        src: "{{ pki_src }}/{{ item }}"
-        dest: "{{ pki_dir }}/{{ item }}"
-        mode: push
-      loop:
-        - kube-controller-manager.pem
-        - kube-controller-manager-key.pem
-        - kube-scheduler.pem
-        - kube-scheduler-key.pem
-        - admin.pem
-        - admin-key.pem
-        - apiserver-kubelet-client.pem
-        - apiserver-kubelet-client-key.pem
-        - front-proxy-client.pem
-        - front-proxy-client-key.pem
-      delegate_to: jumpbox
+# - name: Distribute PKI to control planes
+#   hosts: control_plane
+#   become: true
+#   gather_facts: false
+#   vars:
+#     pki_src: "/root/pki"
+#     pki_dir: "/etc/kubernetes/pki"
+#   tasks:
+#     - name: Ensure target directories exist
+#       file:
+#         path: "{{ item }}"
+#         state: directory
+#         mode: "0755"
+#       loop:
+#         - "{{ pki_dir }}"
+#         - /etc/etcd
+#         - /var/lib/etcd
 
-    - name: Set permissions for component client certs/keys
-      file:
-        path: "{{ pki_dir }}/{{ item }}"
-        owner: root
-        group: root
-        mode: "{{ '0600' if item.endswith('-key.pem') else '0644' }}"
-      loop:
-        - kube-controller-manager.pem
-        - kube-controller-manager-key.pem
-        - kube-scheduler.pem
-        - kube-scheduler-key.pem
-        - admin.pem
-        - admin-key.pem
-        - apiserver-kubelet-client.pem
-        - apiserver-kubelet-client-key.pem
-        - front-proxy-client.pem
-        - front-proxy-client-key.pem
+#     - name: Ensure rsync is installed on all control plane nodes
+#       package:
+#         name: rsync
+#         state: present
+#       become: yes
+#     - name: Copy etcd peer/server cert + key for this node from jumpbox
+#       synchronize:
+#         src: "/root/pki/{{ item }}"
+#         dest: "/etc/etcd/{{ item }}"
+#         mode: push
+#       delegate_to: jumpbox
+#       loop:
+#         - "etcd-{{ inventory_hostname }}.pem"
+#         - "etcd-{{ inventory_hostname }}-key.pem"
+#     - name: Set ownership and permissions for etcd certs
+#       file:
+#         path: "/etc/etcd/{{ item }}"
+#         owner: root
+#         group: root
+#         mode: "{{ '0600' if item.endswith('-key.pem') else '0644' }}"
+#       loop:
+#         - "etcd-{{ inventory_hostname }}.pem"
+#         - "etcd-{{ inventory_hostname }}-key.pem"
 
-    - name: Copy public CAs
-      synchronize:
-        src: "{{ pki_src }}/{{ item.src }}"
-        dest: "{{ pki_dir }}/{{ item.dest }}"
-        mode: push
-      loop:
-        - { src: "ca.pem",               dest: "ca.crt" }
-        - { src: "front-proxy-ca.pem",   dest: "front-proxy-ca.crt" }
-      delegate_to: jumpbox
+#     - name: Copy etcd CA (shared)
+#       synchronize:
+#         src: "{{ pki_src }}/ca.pem"
+#         dest: /etc/etcd/ca.pem
+#       delegate_to: jumpbox
 
-    - name: Set permissions for public CAs
-      file:
-        path: "{{ pki_dir }}/{{ item.dest }}"
-        owner: root
-        group: root
-        mode: "0644"
-      loop:
-        - { src: "ca.pem",               dest: "ca.crt" }
-        - { src: "front-proxy-ca.pem",   dest: "front-proxy-ca.crt" }
+#     - name: Set ownership and permissions for etcd CA
+#       file:
+#         path: /etc/etcd/ca.pem
+#         owner: root
+#         group: root
+#         mode: "0644"  
 
-    - name: Copy service account keys
-      synchronize:
-        src: "{{ pki_src }}/service-accounts/{{ item }}"
-        dest: "{{ pki_dir }}/{{ item }}"
-        mode: push
-      loop:
-        - service-accounts.key
-        - service-accounts.pub
-      delegate_to: jumpbox
+#     - name: Copy etcd client cert for apiserver (optional but recommended)
+#       synchronize:
+#         src: "{{ pki_src }}/etcd-client{{ item.suffix }}"
+#         dest: "/etc/etcd/etcd-client{{ item.suffix }}"
+#         mode: push
+#       loop:
+#         - { suffix: ".pem",      mode: "0644" }
+#         - { suffix: "-key.pem",  mode: "0600" }
+#       ignore_errors: yes
+#       delegate_to: jumpbox
 
-    - name: Set permissions for service account keys
-      file:
-        path: "{{ pki_dir }}/{{ item }}"
-        owner: root
-        group: root
-        mode: "{{ '0600' if item.endswith('.key') else '0644' }}"
-      loop:
-        - service-accounts.key
-        - service-accounts.pub
+#     - name: Set permissions for etcd client cert for apiserver
+#       file:
+#         path: "/etc/etcd/etcd-client{{ item.suffix }}"
+#         owner: root
+#         group: root
+#         mode: "{{ item.mode }}"
+#       loop:
+#         - { suffix: ".pem",      mode: "0644" }
+#         - { suffix: "-key.pem",  mode: "0600" }
+#       ignore_errors: yes
+
+#     - name: Copy kube-apiserver serving cert + key
+#       synchronize:
+#         src: "{{ pki_src }}/{{ item }}"
+#         dest: "{{ pki_dir }}/{{ item }}"
+#         mode: push
+#       loop:
+#         - kube-apiserver.pem
+#         - kube-apiserver-key.pem
+#       delegate_to: jumpbox
+
+#     - name: Set permissions for kube-apiserver serving cert + key
+#       file:
+#         path: "{{ pki_dir }}/{{ item }}"
+#         owner: root
+#         group: root
+#         mode: "{{ '0600' if item.endswith('-key.pem') else '0644' }}"
+#       loop:
+#         - kube-apiserver.pem
+#         - kube-apiserver-key.pem
+
+#     - name: Copy component client certs/keys
+#       synchronize:
+#         src: "{{ pki_src }}/{{ item }}"
+#         dest: "{{ pki_dir }}/{{ item }}"
+#         mode: push
+#       loop:
+#         - kube-controller-manager.pem
+#         - kube-controller-manager-key.pem
+#         - kube-scheduler.pem
+#         - kube-scheduler-key.pem
+#         - admin.pem
+#         - admin-key.pem
+#         - apiserver-kubelet-client.pem
+#         - apiserver-kubelet-client-key.pem
+#         - front-proxy-client.pem
+#         - front-proxy-client-key.pem
+#       delegate_to: jumpbox
+
+#     - name: Set permissions for component client certs/keys
+#       file:
+#         path: "{{ pki_dir }}/{{ item }}"
+#         owner: root
+#         group: root
+#         mode: "{{ '0600' if item.endswith('-key.pem') else '0644' }}"
+#       loop:
+#         - kube-controller-manager.pem
+#         - kube-controller-manager-key.pem
+#         - kube-scheduler.pem
+#         - kube-scheduler-key.pem
+#         - admin.pem
+#         - admin-key.pem
+#         - apiserver-kubelet-client.pem
+#         - apiserver-kubelet-client-key.pem
+#         - front-proxy-client.pem
+#         - front-proxy-client-key.pem
+
+#     - name: Copy public CAs
+#       synchronize:
+#         src: "{{ pki_src }}/{{ item.src }}"
+#         dest: "{{ pki_dir }}/{{ item.dest }}"
+#         mode: push
+#       loop:
+#         - { src: "ca.pem",               dest: "ca.crt" }
+#         - { src: "front-proxy-ca.pem",   dest: "front-proxy-ca.crt" }
+#       delegate_to: jumpbox
+
+#     - name: Set permissions for public CAs
+#       file:
+#         path: "{{ pki_dir }}/{{ item.dest }}"
+#         owner: root
+#         group: root
+#         mode: "0644"
+#       loop:
+#         - { src: "ca.pem",               dest: "ca.crt" }
+#         - { src: "front-proxy-ca.pem",   dest: "front-proxy-ca.crt" }
+
+#     - name: Copy service account keys
+#       synchronize:
+#         src: "{{ pki_src }}/service-accounts/{{ item }}"
+#         dest: "{{ pki_dir }}/{{ item }}"
+#         mode: push
+#       loop:
+#         - service-accounts.key
+#         - service-accounts.pub
+#       delegate_to: jumpbox
+
+#     - name: Set permissions for service account keys
+#       file:
+#         path: "{{ pki_dir }}/{{ item }}"
+#         owner: root
+#         group: root
+#         mode: "{{ '0600' if item.endswith('.key') else '0644' }}"
+#       loop:
+#         - service-accounts.key
+#         - service-accounts.pub

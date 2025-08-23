@@ -1,0 +1,22 @@
+# ---- Core CA + config ----
+- name: Render CA CSR
+  template:
+    src: ca-csr.json.j2
+    dest: "{{ k8s_pki_dir }}/ca-csr.json"
+    mode: "0644"
+
+- name: Render CA config
+  template:
+    src: ca-config.json.j2
+    dest: "{{ k8s_pki_dir }}/ca-config.json"
+    mode: "0644"
+
+- name: Generate Kubernetes Root CA
+  shell: >
+    cfssl gencert -initca ca-csr.json | cfssljson -bare ca
+  args:
+    chdir: "{{ k8s_pki_dir }}"
+    creates: "{{ k8s_pki_dir }}/ca.pem"
+
+
+

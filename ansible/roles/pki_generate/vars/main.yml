@@ -1,0 +1,10 @@
+---
+# vars file for roles/pki_generate
+
+certificates:
+  - name: admin
+    org: system:masters
+  - name: kube-controller-manager
+    org: system:kube-controller-manager
+  - name: kube-scheduler
+    org: system:kube-scheduler

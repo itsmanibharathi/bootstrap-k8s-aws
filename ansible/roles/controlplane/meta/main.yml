@@ -1,0 +1,20 @@
+---
+galaxy_info:
+  author: K8s Multi-Master Setup
+  description: Kubernetes control plane components setup
+  min_ansible_version: 2.9
+  platforms:
+    - name: Ubuntu
+      versions:
+        - focal
+        - jammy
+    - name: EL
+      versions:
+        - 8
+        - 9
+
+dependencies:
+  - role: selfsign-ca
+    when: ca_setup_required | default(true)
+  - role: etcd
+    when: etcd_setup_required | default(true)

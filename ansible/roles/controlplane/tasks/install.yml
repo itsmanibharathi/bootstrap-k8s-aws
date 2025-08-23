@@ -1,0 +1,48 @@
+---
+- name: Create kube group
+  group:
+    name: "{{ kube_group }}"
+    system: yes
+
+- name: Create kube user
+  user:
+    name: "{{ kube_user }}"
+    group: "{{ kube_group }}"
+    system: yes
+    shell: /bin/false
+    home: "{{ kubernetes_config_dir }}"
+    create_home: no
+
+- name: Create kubernetes directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ kube_user }}"
+    group: "{{ kube_group }}"
+    mode: "0750"
+  loop:
+    - "{{ kubernetes_log_dir }}"
+
+- name: Create kubernetes config directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  loop:
+    - "{{ kubernetes_config_dir }}"
+    - "{{ cert_dir }}"
+
+- name: Download kubernetes binaries
+  get_url:
+    url: "{{ kubernetes_download_url }}/{{ item }}"
+    dest: "{{ kubernetes_bin_dir }}/{{ item }}"
+    mode: "0755"
+    owner: root
+    group: root
+  loop:
+    - kube-apiserver
+    - kube-controller-manager
+    - kube-scheduler
+    - kubectl

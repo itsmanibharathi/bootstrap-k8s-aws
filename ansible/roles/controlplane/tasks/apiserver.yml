@@ -1,0 +1,27 @@
+---
+- name: Generate kube-apiserver systemd service
+  template:
+    src: kube-apiserver.service.j2
+    dest: /etc/systemd/system/kube-apiserver.service
+    mode: "0644"
+  notify:
+    - reload systemd
+    - restart kube-apiserver
+
+- name: Start and enable kube-apiserver
+  systemd:
+    name: kube-apiserver
+    state: started
+    enabled: yes
+    daemon_reload: yes
+
+- name: Wait for kube-apiserver to be ready
+  uri:
+    url: "https://{{ private_ip }}:6443/healthz"
+    method: GET
+    validate_certs: no
+    status_code: 200
+  register: apiserver_health
+  until: apiserver_health.status == 200
+  retries: 30
+  delay: 5

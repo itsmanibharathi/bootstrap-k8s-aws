@@ -1,0 +1,2 @@
+k8s_pki_dir: /etc/kubernetes/pki
+k8s_pki_etcd_dir: /etc/kubernetes/pki/etcd

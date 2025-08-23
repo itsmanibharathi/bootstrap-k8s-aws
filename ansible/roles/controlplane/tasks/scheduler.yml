@@ -1,0 +1,24 @@
+---
+- name: Generate scheduler kubeconfig
+  template:
+    src: scheduler.conf.j2
+    dest: "{{ kubernetes_config_dir }}/scheduler.conf"
+    mode: "0600"
+    owner: "{{ kube_user }}"
+    group: "{{ kube_group }}"
+
+- name: Generate kube-scheduler systemd service
+  template:
+    src: kube-scheduler.service.j2
+    dest: /etc/systemd/system/kube-scheduler.service
+    mode: "0644"
+  notify:
+    - reload systemd
+    - restart kube-scheduler
+
+- name: Start and enable kube-scheduler
+  systemd:
+    name: kube-scheduler
+    state: started
+    enabled: yes
+    daemon_reload: yes

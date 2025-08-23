@@ -1,0 +1,61 @@
+# ---- kube-apiserver serving cert ----
+- name: Ensure apiserver dir exists
+  file:
+    path: "{{ k8s_pki_dir }}/kube-apiserver"
+    state: directory
+    mode: "0700"
+
+- name: Render apiserver CSR JSON (with full SANs)
+  template:
+    src: apiserver.json.j2
+    dest: "{{ k8s_pki_dir }}/kube-apiserver/csr.json"
+    mode: "0644"
+
+- name: Generate kube-apiserver serving cert
+  shell: >
+    cfssl gencert -ca={{ k8s_pki_dir}}/ca.pem -ca-key={{ k8s_pki_dir}}/ca-key.pem -config={{ k8s_pki_dir}}/ca-config.json -profile=server
+    kube-apiserver/csr.json | cfssljson -bare kube-apiserver
+  args:
+    chdir: "{{ k8s_pki_dir }}"
+    creates: "{{ k8s_pki_dir }}/kube-apiserver/kube-apiserver.pem"
+
+
+# ---- apiserver -> kubelet client cert ----
+- name: Render apiserver-kubelet client CSR
+  template:
+    src: apiserver-kubelet-client.json.j2
+    dest: "{{ k8s_pki_dir }}/apiserver-kubelet-client.json"
+    mode: "0644"
+
+- name: Generate apiserver-kubelet client cert
+  shell: >
+    cfssl gencert -ca={{ k8s_pki_dir}}/ca.pem -ca-key={{ k8s_pki_dir}}/ca-key.pem -config={{ k8s_pki_dir}}/ca-config.json -profile=client
+    apiserver-kubelet-client.json | cfssljson -bare apiserver-kubelet-client
+  args:
+    chdir: "{{ k8s_pki_dir }}"
+    creates: "{{ k8s_pki_dir }}/apiserver-kubelet-client.pem"
+
+
+# ---- controller-manager, scheduler, admin client certs ----
+- name: Render component client CSRs
+  template:
+    src: "{{ item.src }}"
+    dest: "{{ k8s_pki_dir }}/{{ item.dest }}"
+    mode: "0644"
+  loop:
+    - { src: "controller-manager.json.j2", dest: "controller-manager.json" }
+    - { src: "scheduler.json.j2",         dest: "scheduler.json" }
+    - { src: "admin.json.j2",             dest: "admin.json" }
+
+- name: Generate component client certs
+  shell: >
+    cfssl gencert -ca={{ k8s_pki_dir}}/ca.pem -ca-key={{ k8s_pki_dir}}/ca-key.pem -config={{ k8s_pki_dir}}/ca-config.json -profile=client
+    {{ item }}.json | cfssljson -bare {{ "kube-" + item if item != "admin" else "admin" }}
+  args:
+    chdir: "{{ k8s_pki_dir }}"
+  loop:
+    - controller-manager
+    - scheduler
+    - admin
+  register: gen_components
+  changed_when: false

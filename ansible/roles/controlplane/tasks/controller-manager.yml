@@ -1,0 +1,24 @@
+---
+- name: Generate controller-manager kubeconfig
+  template:
+    src: controller-manager.conf.j2
+    dest: "{{ kubernetes_config_dir }}/controller-manager.conf"
+    mode: "0600"
+    owner: "{{ kube_user }}"
+    group: "{{ kube_group }}"
+
+- name: Generate kube-controller-manager systemd service
+  template:
+    src: kube-controller-manager.service.j2
+    dest: /etc/systemd/system/kube-controller-manager.service
+    mode: "0644"
+  notify:
+    - reload systemd
+    - restart kube-controller-manager
+
+- name: Start and enable kube-controller-manager
+  systemd:
+    name: kube-controller-manager
+    state: started
+    enabled: yes
+    daemon_reload: yes

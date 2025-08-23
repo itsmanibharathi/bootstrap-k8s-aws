@@ -1,0 +1,15 @@
+# ---- (Optional) etcdctl / apiserver etcd client cert ----
+- name: Render etcd client CSR
+  copy:
+    dest: "{{ k8s_pki_etcd_dir }}/etcd-client.json"
+    mode: "0644"
+    content: |
+      { "CN":"etcd-client", "key":{"algo":"rsa","size":4096}, "names":[{"O":"etcd-clients"}] }
+
+- name: Generate etcd client cert
+  shell: >
+    cfssl gencert -ca={{ k8s_pki_dir}}/ca.pem -ca-key={{ k8s_pki_dir}}/ca-key.pem -config={{ k8s_pki_dir}}/ca-config.json -profile=client
+    {{ k8s_pki_etcd_dir }}/etcd-client.json | cfssljson -bare etcd-client
+  args:
+    chdir: "{{ k8s_pki_etcd_dir }}"
+    creates: "{{ k8s_pki_etcd_dir }}/etcd-client.pem"

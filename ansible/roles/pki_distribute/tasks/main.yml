@@ -1,0 +1,11 @@
+---
+- import_tasks: set_dir.yml
+  tags:
+    - always
+    
+- import_tasks: ca_root.yml
+  tags: [pki, ca, root_ca]
+
+- import_tasks: ca_etcd-peer.yml
+  tags: [pki, ca, etcd, peer_ca]
+

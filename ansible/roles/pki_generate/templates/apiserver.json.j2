@@ -1,0 +1,9 @@
+{
+  "CN": "kube-apiserver",
+  "key": { "algo": "rsa", "size": 4096 },
+  "hosts": [
+    {% for h in apiserver_hosts %}"{{ h }}"{% if not loop.last %},{% endif %}{% endfor %}{% if apiserver_dns and apiserver_hosts %},{% endif %}
+    {% for d in apiserver_dns %}"{{ d }}"{% if not loop.last %},{% endif %}{% endfor %}
+  ],
+  "names": [ { "O": "system:masters" } ]
+}
