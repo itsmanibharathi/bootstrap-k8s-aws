@@ -2,6 +2,7 @@
 - name: Deploy etcd cluster
   hosts: control_plane
   become: yes
+  gather_facts: no
   vars:
     etcd_cert_dir: "{{ k8s_pki_etcd_dir }}"
     etcd_ca_file: "{{ k8s_pki_etcd_dir }}/ca.crt" # etcd ca

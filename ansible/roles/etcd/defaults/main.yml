@@ -9,8 +9,8 @@ etcd_config_dir: "/etc/etcd"
 etcd_bin_dir: "/usr/local/bin"
 
 # etcd user
-etcd_user: "etcd"
-etcd_group: "etcd"
+etcd_user: "root"
+etcd_group: "root"
 
 # etcd network
 etcd_client_port: 2379

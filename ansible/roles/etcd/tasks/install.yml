@@ -1,18 +1,4 @@
 ---
-# - name: Create etcd group
-#   group:
-#     name: "{{ etcd_group }}"
-#     system: yes
-
-# - name: Create etcd user
-#   user:
-#     name: "{{ etcd_user }}"
-#     group: "{{ etcd_group }}"
-#     system: yes
-#     shell: /bin/false
-#     home: "{{ etcd_data_dir }}"
-#     create_home: no
-
 - name: Create etcd directories
   file:
     path: "{{ item }}"
@@ -23,14 +9,6 @@
   loop:
     - "{{ etcd_data_dir }}"
     - "{{ etcd_config_dir }}"
-
-# - name: Set etcd data directory ownership
-#   file:
-#     path: "{{ etcd_data_dir }}"
-#     owner: "{{ etcd_user }}"
-#     group: "{{ etcd_group }}"
-#     mode: "0755"
-#     recurse: yes
 
 - name: Download and extract etcd
   unarchive:
