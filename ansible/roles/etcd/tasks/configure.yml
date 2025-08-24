@@ -1,24 +1,26 @@
 ---
-- name: Set certificate ownership for etcd
-  file:
-    path: "{{ etcd_cert_dir }}/{{ inventory_hostname }}.pem"
-    owner: "{{ etcd_user }}"
-    group: "{{ etcd_group }}"
-    mode: "0644"
+# - name: Set etcd certificate ownership
+#   file:
+#     path: "{{ item.path }}"
+#     owner: "{{ etcd_user }}"
+#     group: "{{ etcd_group }}"
+#     mode: "{{ item.mode }}"
+#   loop:
+#     - { path: "{{ etcd_cert_dir }}/server.crt", mode: "0644" }
+#     - { path: "{{ etcd_cert_dir }}/server.key", mode: "0600" }
+#     - { path: "{{ etcd_cert_dir }}/peer.crt", mode: "0644" }
+#     - { path: "{{ etcd_cert_dir }}/peer.key", mode: "0600" }
+#     - { path: "{{ etcd_cert_dir }}/healthcheck-client.crt", mode: "0644" }
+#     - { path: "{{ etcd_cert_dir }}/healthcheck-client.key", mode: "0600" }
 
-- name: Set private key ownership for etcd
-  file:
-    path: "{{ etcd_cert_dir }}/{{ inventory_hostname }}-key.pem"
-    owner: "{{ etcd_user }}"
-    group: "{{ etcd_group }}"
-    mode: "0600"
+# - name: Set etcd CA certificate ownership
+#   file:
+#     path: "{{ etcd_ca_file }}"
+#     owner: "{{ etcd_user }}"
+#     group: "{{ etcd_group }}"
+#     mode: "0644"
 
-- name: Set CA certificate ownership
-  file:
-    path: "{{ etcd_ca_file }}"
-    owner: root
-    group: root
-    mode: "0644"
+
 
 - name: Generate etcd systemd service
   template:

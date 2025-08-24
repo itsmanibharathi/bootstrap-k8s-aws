@@ -1,0 +1,11 @@
+{
+  "CN": "etcd-server",
+  "key": {"algo":"rsa","size":4096},
+  "hosts": [
+    "{{ node_ip }}",
+    "{{ node_name }}",
+    "{{ node_fqdn }}",
+    "127.0.0.1"
+  ],
+  "names": [{"O":"etcd"}]
+}

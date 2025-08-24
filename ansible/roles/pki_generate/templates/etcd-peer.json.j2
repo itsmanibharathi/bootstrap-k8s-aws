@@ -1,0 +1,10 @@
+{
+  "CN": "etcd-peer",
+  "key": {"algo":"rsa","size":4096},
+  "hosts": [
+    "{{ node_ip }}",
+    "{{ node_name }}",
+    "{{ node_fqdn }}"
+  ],
+  "names": [{"O":"etcd"}]
+}

@@ -4,6 +4,6 @@
   become: yes
   vars:
     etcd_cert_dir: "{{ k8s_pki_etcd_dir }}"
-    etcd_ca_file: "{{ k8s_pki_dir }}/ca.crt" # root ca
+    etcd_ca_file: "{{ k8s_pki_etcd_dir }}/ca.crt" # etcd ca
   roles:
     - etcd

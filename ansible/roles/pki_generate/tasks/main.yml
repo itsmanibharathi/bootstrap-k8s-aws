@@ -8,19 +8,19 @@
   tags: [pki, ca, root_ca]
 
 - import_tasks: ca_etcd.yml
-  tags: [pki, ca, pki_etcd_ca]
+  tags: [pki, ca, etcd_ca]
 
 - import_tasks: ca_etcd_peer.yml
-  tags: [pki, ca, pki_etcd_peer]
+  tags: [pki, ca, etcd_peer]
 
 - import_tasks: ca_etcd_client.yml
-  tags: [pki, ca, pki_etcd_client]
+  tags: [pki, ca, etcd_client]
 
 - import_tasks: ca_controlplane.yml
-  tags: [pki, ca, pki_controlplane]
+  tags: [pki, ca, controlplane]
 
 - import_tasks: ca_frontproxy.yml
-  tags: [pki, ca, pki_frontproxy]
+  tags: [pki, ca, frontproxy]
 
 - import_tasks: service_account.yml
   tags: [pki, sa]

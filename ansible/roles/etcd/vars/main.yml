@@ -13,3 +13,7 @@ etcd_listen_client_urls: "https://{{ private_ip }}:{{ etcd_client_port }},https:
 etcd_advertise_client_urls: "https://{{ private_ip }}:{{ etcd_client_port }}"
 etcd_listen_peer_urls: "https://{{ private_ip }}:{{ etcd_peer_port }}"
 etcd_initial_advertise_peer_urls: "https://{{ private_ip }}:{{ etcd_peer_port }}"
+
+# etcd data directory ownership
+etcd_data_dir_owner: "{{ etcd_user }}"
+etcd_data_dir_group: "{{ etcd_group }}"

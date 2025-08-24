@@ -13,10 +13,16 @@
     - "{{ k8s_pki_dir }}/front-proxy-client.crt"
     - "{{ k8s_pki_dir }}/sa.pub"
     - "{{ k8s_pki_etcd_dir }}/ca.crt"
-    - "{{ k8s_pki_etcd_dir }}/server.crt"
-    - "{{ k8s_pki_etcd_dir }}/peer.crt"
     - "{{ k8s_pki_etcd_dir }}/apiserver-etcd-client.crt"
     - "{{ k8s_pki_etcd_dir }}/healthcheck-client.crt"
+
+- name: Set permissions for etcd node certificates (0644)
+  file:
+    path: "{{ k8s_pki_etcd_dir }}/{{ item.0 }}-{{ item.1 }}"
+    owner: root
+    group: root
+    mode: "0644"
+  loop: "{{ cp_hosts | default([]) | product(['server.crt', 'peer.crt']) | list }}"
 
 - name: Set permissions for private key files (0600)
   file:
@@ -32,10 +38,16 @@
     - "{{ k8s_pki_dir }}/front-proxy-client.key"
     - "{{ k8s_pki_dir }}/sa.key"
     - "{{ k8s_pki_etcd_dir }}/ca.key"
-    - "{{ k8s_pki_etcd_dir }}/server.key"
-    - "{{ k8s_pki_etcd_dir }}/peer.key"
     - "{{ k8s_pki_etcd_dir }}/apiserver-etcd-client.key"
     - "{{ k8s_pki_etcd_dir }}/healthcheck-client.key"
+
+- name: Set permissions for etcd node private keys (0600)
+  file:
+    path: "{{ k8s_pki_etcd_dir }}/{{ item.0 }}-{{ item.1 }}"
+    owner: root
+    group: root
+    mode: "0600"
+  loop: "{{ cp_hosts | default([]) | product(['server.key', 'peer.key']) | list }}"
 
 - name: Set permissions for PKI directories
   file:
@@ -72,14 +84,11 @@
     - "{{ k8s_pki_etcd_dir }}/healthcheck-client.pem"
     - "{{ k8s_pki_etcd_dir }}/healthcheck-client-key.pem"
 
-- name: Remove temporary etcd peer .pem files
+- name: Remove temporary etcd .pem files
   file:
-    path: "{{ k8s_pki_etcd_dir }}/{{ item }}"
+    path: "{{ k8s_pki_etcd_dir }}/{{ item.0 }}{{ item.1 }}"
     state: absent
-  loop:
-    - "{{ cp_hosts[0] }}.pem"
-    - "{{ cp_hosts[0] }}-key.pem"
-  when: cp_hosts is defined and cp_hosts | length > 0
+  loop: "{{ cp_hosts | default([]) | product(['-server.pem', '-server-key.pem', '-peer.pem', '-peer-key.pem']) | list }}"
 
 - name: Remove temporary CSR files
   file:
@@ -100,7 +109,6 @@
 
 - name: Remove etcd node CSR files
   file:
-    path: "{{ k8s_pki_etcd_dir }}/{{ item }}-csr.json"
+    path: "{{ k8s_pki_etcd_dir }}/{{ item.0 }}-{{ item.1 }}-csr.json"
     state: absent
-  loop: "{{ cp_hosts | default([]) }}"
-  when: cp_hosts is defined and cp_hosts | length > 0
+  loop: "{{ cp_hosts | default([]) | product(['server', 'peer']) | list }}"

@@ -162,7 +162,7 @@ copy_ssh_config() {
   local remote_path="$3"
 
   echo "📂 Copying SSH config to $host..."
-  scp -o StrictHostKeyChecking=no -i "${SSH_LOCAL_PATH}/${JUMPBOX_KEY_NAME}" "$CONFIG_FILE" "${user}@${host}:${remote_path}/config"
+  scp -o StrictHostKeyChecking=no -o IdentitiesOnly=yes  -i "${SSH_LOCAL_PATH}/${JUMPBOX_KEY_NAME}" "$CONFIG_FILE" "${user}@${host}:${remote_path}/config"
 }
 
 # Copy SSH config to jumpbox
@@ -178,7 +178,7 @@ copy_ssh_keys() {
   local local_key_path="${SSH_LOCAL_PATH}/$5"
 
   echo "🔑 Copying SSH key $key_name to $host..."
-  scp -o StrictHostKeyChecking=no -i "${SSH_LOCAL_PATH}/${key_name}" "${local_key_path}" "${user}@${host}:${remote_path}/"
+  scp -o StrictHostKeyChecking=no -o IdentitiesOnly=yes -i "${SSH_LOCAL_PATH}/${key_name}" "${local_key_path}" "${user}@${host}:${remote_path}/"
 }
 
 # Copy keys to jumpbox

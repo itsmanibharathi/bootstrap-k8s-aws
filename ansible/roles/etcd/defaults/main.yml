@@ -20,6 +20,13 @@ etcd_peer_port: 2380
 etcd_initial_cluster_state: "new"
 etcd_initial_cluster_token: "k8s-etcd-cluster"
 
+# etcd URLs (will be set in vars/main.yml)
+etcd_listen_client_urls: ""
+etcd_advertise_client_urls: ""
+etcd_listen_peer_urls: ""
+etcd_initial_advertise_peer_urls: ""
+etcd_initial_cluster: ""
+
 # PKI paths (certificates already distributed by PKI playbook)
-etcd_cert_dir: "/etc/etcd"
-etcd_ca_file: "/etc/etcd/ca.pem"
+etcd_cert_dir: "{{ k8s_pki_etcd_dir }}"
+etcd_ca_file: "{{ k8s_pki_etcd_dir }}/ca.crt"

@@ -61,18 +61,21 @@
     - { src: "sa-key.pem", dest: "sa.key" }
     - { src: "sa-pub.pem", dest: "sa.pub" }
 
-- name: Rename etcd certificates for first control plane node
+- name: Rename etcd server certificates
   copy:
-    src: "{{ k8s_pki_etcd_dir }}/{{ cp_hosts[0] }}{{ item.src }}"
-    dest: "{{ k8s_pki_etcd_dir }}/{{ item.dest }}"
+    src: "{{ k8s_pki_etcd_dir }}/{{ item.0 }}-server{{ item.1.src }}"
+    dest: "{{ k8s_pki_etcd_dir }}/{{ item.0 }}-{{ item.1.dest }}"
     remote_src: true
     mode: preserve
-  loop:
-    - { src: ".pem", dest: "server.crt" }
-    - { src: "-key.pem", dest: "server.key" }
-    - { src: ".pem", dest: "peer.crt" }
-    - { src: "-key.pem", dest: "peer.key" }
-  when: cp_hosts is defined and cp_hosts | length > 0
+  loop: "{{ cp_hosts | default([]) | product([{'src': '.pem', 'dest': 'server.crt'}, {'src': '-key.pem', 'dest': 'server.key'}]) | list }}"
+
+- name: Rename etcd peer certificates
+  copy:
+    src: "{{ k8s_pki_etcd_dir }}/{{ item.0 }}-peer{{ item.1.src }}"
+    dest: "{{ k8s_pki_etcd_dir }}/{{ item.0 }}-{{ item.1.dest }}"
+    remote_src: true
+    mode: preserve
+  loop: "{{ cp_hosts | default([]) | product([{'src': '.pem', 'dest': 'peer.crt'}, {'src': '-key.pem', 'dest': 'peer.key'}]) | list }}"
 
 - name: Rename etcd client certificates
   copy:

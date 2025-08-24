@@ -1,9 +1,9 @@
-# ---- etcd per-node peer/server certs ----
-- name: Render etcd node CSR JSON
+# ---- etcd per-node server and peer certs ----
+- name: Render etcd server CSR JSON
   when: (cp_hosts | default([])) | length > 0
   template:
-    src: etcd-node.json.j2
-    dest: "{{ k8s_pki_etcd_dir }}/{{ item }}-csr.json"
+    src: etcd-server.json.j2
+    dest: "{{ k8s_pki_etcd_dir }}/{{ item }}-server-csr.json"
     mode: "0644"
     owner: root
     group: root
@@ -13,14 +13,36 @@
     node_name: "{{ item }}"
     node_fqdn: "{{ item }}.{{ cluster_domain }}"
 
-- name: Generate etcd node cert (peer/server profile)
+- name: Render etcd peer CSR JSON
+  when: (cp_hosts | default([])) | length > 0
+  template:
+    src: etcd-peer.json.j2
+    dest: "{{ k8s_pki_etcd_dir }}/{{ item }}-peer-csr.json"
+    mode: "0644"
+    owner: root
+    group: root
+  loop: "{{ cp_hosts | default([]) }}"
+  vars:
+    node_ip: "{{ hostvars[item].private_ip }}"
+    node_name: "{{ item }}"
+    node_fqdn: "{{ item }}.{{ cluster_domain }}"
+
+- name: Generate etcd server certificates
+  when: (cp_hosts | default([])) | length > 0
+  shell: >
+    cfssl gencert -ca=etcd-ca.pem -ca-key=etcd-ca-key.pem -config={{ k8s_pki_dir }}/ca-config.json -profile=server
+    {{ item }}-server-csr.json | cfssljson -bare {{ item }}-server
+  args:
+    chdir: "{{ k8s_pki_etcd_dir }}"
+    creates: "{{ k8s_pki_etcd_dir }}/{{ item }}-server.pem"
+  loop: "{{ cp_hosts | default([]) }}"
+
+- name: Generate etcd peer certificates
   when: (cp_hosts | default([])) | length > 0
   shell: >
     cfssl gencert -ca=etcd-ca.pem -ca-key=etcd-ca-key.pem -config={{ k8s_pki_dir }}/ca-config.json -profile=peer
-    {{ item }}-csr.json | cfssljson -bare {{ item }}
+    {{ item }}-peer-csr.json | cfssljson -bare {{ item }}-peer
   args:
     chdir: "{{ k8s_pki_etcd_dir }}"
-    creates: "{{ k8s_pki_etcd_dir }}/{{ item }}.pem"
+    creates: "{{ k8s_pki_etcd_dir }}/{{ item }}-peer.pem"
   loop: "{{ cp_hosts | default([]) }}"
-  register: etcd_peer_result
-  failed_when: etcd_peer_result is failed
