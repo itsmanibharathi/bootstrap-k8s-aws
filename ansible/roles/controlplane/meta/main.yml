@@ -12,9 +12,3 @@ galaxy_info:
       versions:
         - 8
         - 9
-
-dependencies:
-  - role: selfsign-ca
-    when: ca_setup_required | default(true)
-  - role: etcd
-    when: etcd_setup_required | default(true)

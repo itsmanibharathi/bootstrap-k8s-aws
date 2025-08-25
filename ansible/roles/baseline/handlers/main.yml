@@ -1,2 +1,18 @@
 ---
-# handlers file for roles/bseline
+- name: Validate and restart SSH
+  block:
+    - name: Validate sshd configuration
+      ansible.builtin.command: "sshd -t -f {{ sshd_config_path }}"
+      changed_when: false
+
+    - name: Restart SSH daemon
+      ansible.builtin.service:
+        name: "{{ ssh_service_name }}"
+        state: restarted
+  rescue:
+    - name: Show sshd_config if validation failed
+      ansible.builtin.command: "sed -n '1,200p' {{ sshd_config_path }}"
+      changed_when: false
+    - name: Fail due to invalid sshd config
+      ansible.builtin.fail:
+        msg: "sshd configuration validation failed. Reverted service restart."

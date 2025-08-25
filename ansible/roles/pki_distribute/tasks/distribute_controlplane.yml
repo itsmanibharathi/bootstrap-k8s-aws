@@ -1,32 +1,45 @@
 # ---- Distribute PKI files to control plane nodes ----
 
 # Root CA files
-# - name: Copy root CA certificate
-#   synchronize:
-#     src: "{{ k8s_pki_dir }}/ca.crt"
-#     dest: "{{ k8s_pki_dir }}/ca.crt"
-#     mode: push
-#   delegate_to: jumpbox
+- name: Copy root CA certificate
+  synchronize:
+    src: "{{ k8s_pki_dir }}/ca.crt"
+    dest: "{{ k8s_pki_dir }}/ca.crt"
+    mode: push
+  delegate_to: jumpbox
 
-# - name: Copy root CA private key
-#   synchronize:
-#     src: "{{ k8s_pki_dir }}/ca.key"
-#     dest: "{{ k8s_pki_dir }}/ca.key"
-#     mode: push
-#   delegate_to: jumpbox
+- name: Copy root CA private key
+  synchronize:
+    src: "{{ k8s_pki_dir }}/ca.key"
+    dest: "{{ k8s_pki_dir }}/ca.key"
+    mode: push
+  delegate_to: jumpbox
 
-# # API server certificates
-# - name: Copy API server certificates
-#   synchronize:
-#     src: "{{ k8s_pki_dir }}/{{ item }}"
-#     dest: "{{ k8s_pki_dir }}/{{ item }}"
-#     mode: push
-#   delegate_to: jumpbox
-#   loop:
-#     - apiserver.crt
-#     - apiserver.key
-#     - apiserver-kubelet-client.crt
-#     - apiserver-kubelet-client.key
+# API server certificates
+- name: Copy API server certificates
+  synchronize:
+    src: "{{ k8s_pki_dir }}/{{ item }}"
+    dest: "{{ k8s_pki_dir }}/{{ item }}"
+    mode: push
+  delegate_to: jumpbox
+  loop:
+    - apiserver.crt
+    - apiserver.key
+    - apiserver-kubelet-client.crt
+    - apiserver-kubelet-client.key
+
+# Component client certificates
+- name: Copy component client certificates
+  synchronize:
+    src: "{{ k8s_pki_dir }}/{{ item }}"
+    dest: "{{ k8s_pki_dir }}/{{ item }}"
+    mode: push
+  delegate_to: jumpbox
+  loop:
+    - kube-controller-manager.crt
+    - kube-controller-manager.key
+    - kube-scheduler.crt
+    - kube-scheduler.key
 
 # Front proxy certificates
 - name: Copy front proxy certificates

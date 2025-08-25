@@ -26,6 +26,5 @@ etcd_servers: >-
   {{ etcd_endpoints | join(',') }}
 
 # Certificate paths
-
-cert_dir: "{{ cert_dir }}/ca"
-root_ca_file: "{{ cert_dir }}/ca.crt"
+cert_dir: "{{ k8s_pki_dir }}"
+root_ca_file: "{{ k8s_pki_dir }}/ca.crt"

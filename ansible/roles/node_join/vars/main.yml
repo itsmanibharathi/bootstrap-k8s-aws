@@ -1,0 +1,5 @@
+---
+# Bootstrap configuration
+bootstrap_token_ttl: "24h"
+node_labels:
+  - "node-role.kubernetes.io/worker="

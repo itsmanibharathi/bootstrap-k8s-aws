@@ -1,0 +1,26 @@
+---
+- name: Deploy HAProxy load balancer
+  hosts: jumpbox
+  gather_facts: no
+  become: yes
+  roles:
+    - ha_proxy
+
+- name: Install kubectl and etcdctl
+  hosts: jumpbox
+  become: yes
+  roles:
+    - kubectl_install
+    - etcdctl_install
+
+- name: Initialize Kubernetes cluster
+  hosts: jumpbox
+  become: yes
+  roles:
+    - cluster_init
+
+# - name: Check cluster health
+#   hosts: control_plane[0]
+#   become: yes
+#   roles:
+#     - cluster_health

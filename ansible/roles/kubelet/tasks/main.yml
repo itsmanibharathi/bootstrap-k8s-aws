@@ -1,0 +1,45 @@
+---
+- name: Create kubernetes directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: '0755'
+  loop:
+    - /etc/kubernetes
+    - /etc/kubernetes/manifests
+    - /var/lib/kubelet
+    - /var/log/kubernetes
+
+- name: Download kubelet binary
+  get_url:
+    url: "{{ kubernetes_download_url }}/kubelet"
+    dest: /usr/local/bin/kubelet
+    mode: '0755'
+
+- name: Download kube-proxy binary
+  get_url:
+    url: "{{ kubernetes_download_url }}/kube-proxy"
+    dest: /usr/local/bin/kube-proxy
+    mode: '0755'
+
+- name: Create kubelet config
+  template:
+    src: kubelet-config.yaml.j2
+    dest: /var/lib/kubelet/config.yaml
+    mode: '0644'
+  notify: restart kubelet
+
+- name: Create kubelet systemd service
+  template:
+    src: kubelet.service.j2
+    dest: /etc/systemd/system/kubelet.service
+    mode: '0644'
+  notify:
+    - reload systemd
+    - restart kubelet
+
+- name: Enable kubelet service
+  systemd:
+    name: kubelet
+    enabled: yes
+    daemon_reload: yes

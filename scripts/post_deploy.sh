@@ -109,6 +109,7 @@ ssh_config() {
     echo "    User $EXUSION_USER"
     echo "    IdentityFile ${path}${JUMPBOX_KEY_NAME}"
     echo "    ForwardAgent yes"
+    echo "    IdentitiesOnly=yes"
     echo "    StrictHostKeyChecking no"
     echo ""
   fi
@@ -123,6 +124,7 @@ ssh_config() {
     echo "    HostName $IP"
     echo "    User $EXUSION_USER"
     echo "    IdentityFile ${path}${CONTROL_KEY_NAME}"
+    echo "    IdentitiesOnly yes"
     if [ "$include_proxy" = true ]; then
       echo "    ProxyJump jumpbox"
       echo "    StrictHostKeyChecking no"
@@ -141,6 +143,7 @@ ssh_config() {
       echo "    HostName $IP"
       echo "    User $EXUSION_USER"
       echo "    IdentityFile ${path}${WORKER_KEY_NAME}"
+      echo "    IdentitiesOnly yes"
       if [ "$include_proxy" = true ]; then
         echo "    ProxyJump jumpbox"
         echo "    StrictHostKeyChecking no"

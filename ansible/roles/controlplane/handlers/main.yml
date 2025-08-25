@@ -3,21 +3,18 @@
   systemd:
     name: kube-apiserver
     state: restarted
-    daemon_reload: yes
   listen: "restart kube-apiserver"
 
 - name: restart kube-controller-manager
   systemd:
     name: kube-controller-manager
     state: restarted
-    daemon_reload: yes
   listen: "restart kube-controller-manager"
 
 - name: restart kube-scheduler
   systemd:
     name: kube-scheduler
     state: restarted
-    daemon_reload: yes
   listen: "restart kube-scheduler"
 
 - name: reload systemd

@@ -4,7 +4,7 @@ Documentation=https://github.com/kubernetes/kubernetes
 After=network.target
 
 [Service]
-Type=notify
+Type=simple
 User={{ kube_user }}
 Group={{ kube_group }}
 ExecStart={{ kubernetes_bin_dir }}/kube-controller-manager \
@@ -12,11 +12,11 @@ ExecStart={{ kubernetes_bin_dir }}/kube-controller-manager \
   --cluster-cidr={{ pod_cidr }} \
   --cluster-name=kubernetes \
   --cluster-signing-cert-file={{ cert_dir }}/ca.crt \
-  --cluster-signing-key-file={{ cert_dir }}/ca-key.pem \
+  --cluster-signing-key-file={{ cert_dir }}/ca.key \
   --kubeconfig={{ kubernetes_config_dir }}/controller-manager.conf \
   --leader-elect=true \
   --root-ca-file={{ cert_dir }}/ca.crt \
-  --service-account-private-key-file={{ cert_dir }}/service-accounts.key \
+  --service-account-private-key-file={{ cert_dir }}/sa.key \
   --service-cluster-ip-range={{ service_cluster_ip_range }} \
   --use-service-account-credentials=true \
   --v=2

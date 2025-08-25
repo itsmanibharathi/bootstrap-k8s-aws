@@ -4,7 +4,7 @@ Documentation=https://github.com/kubernetes/kubernetes
 After=network.target
 
 [Service]
-Type=notify
+Type=simple
 User={{ kube_user }}
 Group={{ kube_group }}
 ExecStart={{ kubernetes_bin_dir }}/kube-scheduler \

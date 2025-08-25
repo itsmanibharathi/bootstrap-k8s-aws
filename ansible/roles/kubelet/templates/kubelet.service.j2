@@ -1,0 +1,21 @@
+[Unit]
+Description=kubelet: The Kubernetes Node Agent
+Documentation=https://kubernetes.io/docs/
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+ExecStart=/usr/local/bin/kubelet \
+  --config=/var/lib/kubelet/config.yaml \
+  --container-runtime-endpoint=unix:///var/run/containerd/containerd.sock \
+  --kubeconfig=/etc/kubernetes/kubelet.conf \
+  --bootstrap-kubeconfig=/etc/kubernetes/bootstrap-kubelet.conf \
+  --rotate-certificates=true \
+  --rotate-server-certificates=true \
+  --cert-dir=/var/lib/kubelet/pki \
+  --v=2
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

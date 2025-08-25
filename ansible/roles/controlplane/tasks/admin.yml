@@ -1,0 +1,25 @@
+---
+- name: Create .kube directory for root
+  file:
+    path: /root/.kube
+    state: directory
+    mode: "0755"
+    owner: root
+    group: root
+
+- name: Generate admin kubeconfig
+  template:
+    src: admin.conf.j2
+    dest: "{{ kubernetes_config_dir }}/admin.conf"
+    mode: "0600"
+    owner: "{{ kube_user }}"
+    group: "{{ kube_group }}"
+
+- name: Copy admin kubeconfig to root user
+  copy:
+    src: "{{ kubernetes_config_dir }}/admin.conf"
+    dest: /root/.kube/config
+    remote_src: yes
+    mode: "0600"
+    owner: root
+    group: root

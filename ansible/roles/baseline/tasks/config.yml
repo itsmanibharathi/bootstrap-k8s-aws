@@ -1,0 +1,18 @@
+
+    # - name: Ensure MaxSessions is set
+    #   ansible.builtin.lineinfile:
+    #     path: "{{ sshd_config_path }}"
+    #     regexp: '^\s*MaxSessions\s+'
+    #     line: "MaxSessions {{ max_sessions }}"
+    #     state: present
+    #     backrefs: false
+    #   notify: Validate and restart SSH
+
+- name: Ensure MaxStartups is set
+  ansible.builtin.lineinfile:
+    path: "{{ sshd_config_path }}"
+    regexp: '^\s*MaxStartups\s+'
+    line: "MaxStartups {{ max_startups }}"
+    state: present
+    backrefs: false
+  notify: Validate and restart SSH

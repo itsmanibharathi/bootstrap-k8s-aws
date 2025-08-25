@@ -1,0 +1,47 @@
+---
+- name: Download Cilium CLI
+  get_url:
+    url: "https://github.com/cilium/cilium-cli/releases/download/v{{ cilium_cli_version }}/cilium-linux-amd64.tar.gz"
+    dest: /tmp/cilium-cli.tar.gz
+  delegate_to: "{{ groups['jumpbox'][0] }}"
+  run_once: true
+
+- name: Extract Cilium CLI
+  unarchive:
+    src: /tmp/cilium-cli.tar.gz
+    dest: /usr/local/bin/
+    remote_src: yes
+    mode: '0755'
+  delegate_to: "{{ groups['jumpbox'][0] }}"
+  run_once: true
+
+- name: Install Cilium CNI
+  shell: |
+    cilium install \
+      --version={{ cilium_version }} \
+      --set ipam.mode=kubernetes \
+      --set kubeProxyReplacement=strict \
+      --set k8sServiceHost={{ hostvars[groups['control_plane'][0]]['private_ip'] }} \
+      --set k8sServicePort=6443 \
+      --set cluster.name=k8s-cluster \
+      --set cluster.id=1
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
+  delegate_to: "{{ groups['jumpbox'][0] }}"
+  run_once: true
+
+- name: Wait for Cilium to be ready
+  shell: cilium status --wait
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
+  delegate_to: "{{ groups['jumpbox'][0] }}"
+  run_once: true
+
+- name: Enable Hubble observability
+  shell: |
+    cilium hubble enable --ui
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
+  delegate_to: "{{ groups['jumpbox'][0] }}"
+  run_once: true
+  when: cilium_enable_hubble | default(true)

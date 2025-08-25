@@ -3,6 +3,9 @@
   import_tasks: install.yml
   tags: [controlplane, install]
 
+- name: Fix certificate permissions
+  import_tasks: fix_permissions.yml
+  tags: [controlplane, permissions]
 
 - name: Import kube-apiserver tasks
   import_tasks: apiserver.yml
@@ -15,3 +18,12 @@
 - name: Import kube-scheduler tasks
   import_tasks: scheduler.yml
   tags: [controlplane, scheduler]
+
+# - name: Import admin tasks
+#   import_tasks: admin.yml
+#   tags: [controlplane, admin]
+
+# - name: Setup bootstrap RBAC
+#   import_tasks: bootstrap-rbac.yml
+#   tags: [controlplane, bootstrap]
+#   run_once: true

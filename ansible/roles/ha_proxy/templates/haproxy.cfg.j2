@@ -1,0 +1,24 @@
+global
+  daemon
+  maxconn 20480
+  log stdout local0
+
+defaults
+  mode tcp
+  timeout connect 5s
+  timeout client  50s
+  timeout server  50s
+  option tcplog
+  log global
+
+frontend k8s_api
+  bind 0.0.0.0:6443
+  default_backend k8s_api_back
+
+backend k8s_api_back
+  balance roundrobin
+  option tcp-check
+  default-server fall 3 rise 2 on-marked-down shutdown-sessions
+{% for host in groups['control_plane'] %}
+  server {{ host }} {{ hostvars[host]['private_ip'] }}:6443 check
+{% endfor %}

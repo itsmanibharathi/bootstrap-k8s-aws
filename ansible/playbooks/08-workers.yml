@@ -1,0 +1,16 @@
+---
+- name: Setup worker nodes
+  hosts: control_plane
+  become: yes
+  gather_facts: yes
+  roles:
+    - containerd
+    - kubelet
+    - node_join
+
+# - name: Deploy Cilium CNI
+#   hosts: jumpbox
+#   become: yes
+#   gather_facts: no
+#   roles:
+#     - cilium

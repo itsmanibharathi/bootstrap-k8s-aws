@@ -51,6 +51,20 @@
     - { src: "front-proxy-client.pem", dest: "front-proxy-client.crt" }
     - { src: "front-proxy-client-key.pem", dest: "front-proxy-client.key" }
 
+- name: Rename component client certificates
+  copy:
+    src: "{{ k8s_pki_dir }}/{{ item.src }}"
+    dest: "{{ k8s_pki_dir }}/{{ item.dest }}"
+    remote_src: true
+    mode: preserve
+  loop:
+    - { src: "kube-controller-manager.pem", dest: "kube-controller-manager.crt" }
+    - { src: "kube-controller-manager-key.pem", dest: "kube-controller-manager.key" }
+    - { src: "kube-scheduler.pem", dest: "kube-scheduler.crt" }
+    - { src: "kube-scheduler-key.pem", dest: "kube-scheduler.key" }
+    - { src: "admin.pem", dest: "admin.crt" }
+    - { src: "admin-key.pem", dest: "admin.key" }
+
 - name: Rename service account files
   copy:
     src: "{{ k8s_pki_dir }}/{{ item.src }}"

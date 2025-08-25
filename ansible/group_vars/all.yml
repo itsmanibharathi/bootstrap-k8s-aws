@@ -30,3 +30,13 @@ etcd_initial_cluster: ""
 # PKI paths (certificates already distributed by PKI playbook)
 etcd_cert_dir: "{{ k8s_pki_etcd_dir }}"
 etcd_ca_file: "{{ k8s_pki_etcd_dir }}/ca.crt"
+
+# Cilium CNI configuration
+cilium_version: "1.14.5"
+cilium_enable_network_policy: true
+cilium_enable_hubble: true
+cilium_kube_proxy_replacement: true
+
+# Worker node configuration
+kubernetes_version: "1.28.2"
+containerd_version: "1.7.8"

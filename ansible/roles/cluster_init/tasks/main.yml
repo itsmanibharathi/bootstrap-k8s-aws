@@ -1,0 +1,38 @@
+---
+- name: Create kubectl config for admin user
+  shell: |
+    kubectl config set-cluster k8s \
+      --certificate-authority={{ cert_dir }}/ca.crt \
+      --embed-certs=true \
+      --server=https://api.k8s.local:6443 \
+      --kubeconfig=/root/.kube/config
+    
+    kubectl config set-credentials admin \
+      --client-certificate={{ cert_dir }}/admin.crt \
+      --client-key={{ cert_dir }}/admin.key \
+      --embed-certs=true \
+      --kubeconfig=/root/.kube/config
+
+    kubectl config set-context default \
+      --cluster=k8s \
+      --user=admin \
+      --kubeconfig=/root/.kube/config
+
+    kubectl config use-context default \
+      --kubeconfig=/root/.kube/config
+
+- name: Set permissions for kubectl config
+  file:
+    path: /root/.kube/config
+    owner: root
+    group: root
+    mode: "0600"
+
+- name: Test kubectl connectivity
+  shell: kubectl get nodes
+  register: kubectl_test
+  failed_when: false
+
+- name: Display kubectl test result
+  debug:
+    msg: "kubectl test result: {{ kubectl_test.stdout if kubectl_test.rc == 0 else kubectl_test.stderr }}"

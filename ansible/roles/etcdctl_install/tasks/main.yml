@@ -1,0 +1,36 @@
+---
+- name: Download etcdctl binary
+  get_url:
+    url: "{{ etcd_download_url }}"
+    dest: /tmp/etcd.tar.gz
+    mode: "0644"
+
+- name: Extract etcdctl binary
+  unarchive:
+    src: /tmp/etcd.tar.gz
+    dest: /tmp
+    remote_src: yes
+    creates: "/tmp/etcd-v{{ etcd_version }}-linux-amd64"
+
+- name: Install etcdctl binary
+  copy:
+    src: "/tmp/etcd-v{{ etcd_version }}-linux-amd64/etcdctl"
+    dest: "{{ etcd_bin_dir }}/etcdctl"
+    mode: "0755"
+    owner: root
+    group: root
+    remote_src: yes
+
+- name: Create etcdctl environment file
+  template:
+    src: etcdctl.env.j2
+    dest: /etc/profile.d/etcdctl.sh
+    mode: "0644"
+
+- name: Clean up etcd download files
+  file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - /tmp/etcd.tar.gz
+    - "/tmp/etcd-v{{ etcd_version }}-linux-amd64"

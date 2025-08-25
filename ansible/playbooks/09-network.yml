@@ -1,0 +1,52 @@
+---
+- name: Configure Cilium Network Policies
+  hosts: jumpbox
+  become: yes
+  gather_facts: no
+  tasks:
+    - name: Apply default network policies
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: cilium.io/v2
+          kind: CiliumNetworkPolicy
+          metadata:
+            name: default-deny-ingress
+            namespace: default
+          spec:
+            endpointSelector: {}
+            ingress: []
+      environment:
+        KUBECONFIG: /etc/kubernetes/admin.conf
+
+    - name: Allow DNS traffic
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: cilium.io/v2
+          kind: CiliumNetworkPolicy
+          metadata:
+            name: allow-dns
+            namespace: default
+          spec:
+            endpointSelector: {}
+            egress:
+            - toEndpoints:
+              - matchLabels:
+                  k8s:io.kubernetes.pod.namespace: kube-system
+                  k8s:k8s-app: kube-dns
+              toPorts:
+              - ports:
+                - port: "53"
+                  protocol: UDP
+                - port: "53"
+                  protocol: TCP
+      environment:
+        KUBECONFIG: /etc/kubernetes/admin.conf
+
+    - name: Verify Cilium connectivity
+      shell: cilium connectivity test --test-concurrency=1
+      environment:
+        KUBECONFIG: /etc/kubernetes/admin.conf
+      register: connectivity_test
+      failed_when: connectivity_test.rc != 0

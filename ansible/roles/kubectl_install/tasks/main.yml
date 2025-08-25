@@ -1,0 +1,25 @@
+---
+- name: Download kubectl binary
+  get_url:
+    url: "{{ kubernetes_download_url }}/kubectl"
+    dest: "{{ kubernetes_bin_dir }}/kubectl"
+    mode: "0755"
+    owner: root
+    group: root
+
+- name: Create bash completion directory
+  file:
+    path: /etc/bash_completion.d
+    state: directory
+    mode: "0755"
+
+- name: Install kubectl completion
+  shell: kubectl completion bash > /etc/bash_completion.d/kubectl
+  args:
+    creates: /etc/bash_completion.d/kubectl
+
+- name: Create kubectl symlink for kube user
+  file:
+    src: "{{ kubernetes_bin_dir }}/kubectl"
+    dest: /usr/bin/kubectl
+    state: link

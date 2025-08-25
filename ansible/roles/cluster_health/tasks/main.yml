@@ -1,0 +1,55 @@
+---
+- name: Wait for API server to be ready
+  uri:
+    url: "https://{{ private_ip }}:6443/healthz"
+    method: GET
+    validate_certs: no
+    status_code: 200
+  register: apiserver_health
+  until: apiserver_health.status == 200
+  retries: 30
+  delay: 10
+
+- name: Check cluster info
+  shell: kubectl cluster-info --kubeconfig=/root/.kube/config
+  register: cluster_info
+  failed_when: false
+
+- name: Check node status
+  shell: kubectl get nodes --kubeconfig=/root/.kube/config
+  register: node_status
+  failed_when: false
+
+- name: Check system pods
+  shell: kubectl get pods -A --kubeconfig=/root/.kube/config
+  register: system_pods
+  failed_when: false
+
+- name: Check etcd cluster health
+  shell: |
+    export ETCDCTL_API=3
+    export ETCDCTL_CACERT={{ etcd_cert_dir }}/ca.crt
+    export ETCDCTL_CERT={{ etcd_cert_dir }}/healthcheck-client.crt
+    export ETCDCTL_KEY={{ etcd_cert_dir }}/healthcheck-client.key
+    export ETCDCTL_ENDPOINTS={% for host in groups['control_plane'] %}https://{{ hostvars[host]['private_ip'] }}:2379{% if not loop.last %},{% endif %}{% endfor %}
+    etcdctl endpoint health
+  args:
+    executable: /bin/bash
+  register: etcd_health
+  failed_when: false
+
+- name: Display cluster health results
+  debug:
+    msg: |
+      Cluster Info: {{ cluster_info.stdout }}
+      Node Status: {{ node_status.stdout }}
+      System Pods: {{ system_pods.stdout }}
+      Etcd Health: {{ etcd_health.stdout }}
+
+- name: Test deployment
+  shell: |
+    kubectl create deployment test-nginx --image=nginx --replicas=1 --kubeconfig=/root/.kube/config
+    kubectl wait --for=condition=available --timeout=60s deployment/test-nginx --kubeconfig=/root/.kube/config
+    kubectl delete deployment test-nginx --kubeconfig=/root/.kube/config
+  register: test_deployment
+  failed_when: false

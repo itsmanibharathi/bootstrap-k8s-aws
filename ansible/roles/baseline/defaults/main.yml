@@ -1,2 +1,6 @@
 ---
 # defaults file for roles/bseline
+sshd_config_path: /etc/ssh/sshd_config
+ssh_service_name: "{{ 'ssh' if ansible_facts.os_family == 'Debian' else 'sshd' }}"
+max_sessions: 5
+max_startups: "50:30:100" 

@@ -1,0 +1,68 @@
+---
+# Fix certificate permissions for kube user access
+- name: Find existing certificate files
+  find:
+    paths: "{{ cert_dir }}"
+    patterns: "*.crt,*.pub"
+  register: cert_files
+
+- name: Find existing private key files
+  find:
+    paths: "{{ cert_dir }}"
+    patterns: "*.key"
+  register: key_files
+
+- name: Set ownership for certificate files to kube user
+  file:
+    path: "{{ item.path }}"
+    owner: "{{ kube_user }}"
+    group: "{{ kube_group }}"
+    mode: "0644"
+  loop: "{{ cert_files.files }}"
+
+- name: Set ownership for private key files to kube user
+  file:
+    path: "{{ item.path }}"
+    owner: "{{ kube_user }}"
+    group: "{{ kube_group }}"
+    mode: "0600"
+  loop: "{{ key_files.files }}"
+
+- name: Find existing etcd certificate files
+  find:
+    paths: "{{ etcd_cert_dir }}"
+    patterns: "*.crt"
+  register: etcd_cert_files
+
+- name: Find existing etcd private key files
+  find:
+    paths: "{{ etcd_cert_dir }}"
+    patterns: "*.key"
+  register: etcd_key_files
+
+- name: Set ownership for etcd certificate files to kube user
+  file:
+    path: "{{ item.path }}"
+    owner: "{{ kube_user }}"
+    group: "{{ kube_group }}"
+    mode: "0644"
+  loop: "{{ etcd_cert_files.files }}"
+
+- name: Set ownership for etcd private key files to kube user
+  file:
+    path: "{{ item.path }}"
+    owner: "{{ kube_user }}"
+    group: "{{ kube_group }}"
+    mode: "0600"
+  loop: "{{ etcd_key_files.files }}"
+
+- name: Set ownership for PKI directories
+  file:
+    path: "{{ item }}"
+    owner: "{{ kube_user }}"
+    group: "{{ kube_group }}"
+    mode: "0755"
+    state: directory
+  loop:
+    - "{{ cert_dir }}"
+    - "{{ etcd_cert_dir }}"

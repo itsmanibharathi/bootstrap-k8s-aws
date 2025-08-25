@@ -1,0 +1,5 @@
+---
+cilium_version: "1.14.5"
+cilium_cli_version: "0.15.18"
+cilium_enable_hubble: true
+cilium_enable_network_policy: true

@@ -1,2 +1,5 @@
 ---
-# handlers file for roles/ha_proxy
+- name: restart haproxy
+  systemd:
+    name: haproxy
+    state: restarted

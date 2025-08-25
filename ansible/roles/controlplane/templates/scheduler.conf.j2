@@ -14,5 +14,5 @@ current-context: system:kube-scheduler@kubernetes
 users:
 - name: system:kube-scheduler
   user:
-    client-certificate: {{ cert_dir }}/kube-scheduler.pem
-    client-key: {{ cert_dir }}/kube-scheduler-key.pem
+    client-certificate: {{ cert_dir }}/kube-scheduler.crt
+    client-key: {{ cert_dir }}/kube-scheduler.key

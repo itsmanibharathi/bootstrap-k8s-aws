@@ -6,18 +6,18 @@
     enabled: yes
     daemon_reload: yes
 
-- name: Wait for etcd to be ready
-  uri:
-    url: "https://{{ private_ip }}:{{ etcd_client_port }}/health"
-    method: GET
-    validate_certs: no
-    client_cert: "{{ etcd_cert_dir }}/{{ inventory_hostname }}.pem"
-    client_key: "{{ etcd_cert_dir }}/{{ inventory_hostname }}-key.pem"
-  register: etcd_health
-  until: etcd_health.status == 200
-  delegate_to: jumpbox
-  retries: 30
-  delay: 5
+# - name: Wait for etcd to be ready
+#   uri:
+#     url: "https://{{ private_ip }}:{{ etcd_client_port }}/health"
+#     method: GET
+#     validate_certs: no
+#     client_cert: "{{ etcd_cert_dir }}/{{ inventory_hostname }}.crt"
+#     client_key: "{{ etcd_cert_dir }}/{{ inventory_hostname }}.key"
+#   register: etcd_health
+#   until: etcd_health.status == 200
+#   delegate_to: jumpbox
+#   retries: 30
+#   delay: 5
 
 # - name: Verify etcd cluster health
 #   shell: |
