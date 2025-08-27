@@ -1,38 +1,19 @@
-Role Name
-=========
+# node_join
 
-A brief description of the role goes here.
+Bootstraps Kubernetes worker nodes using kubelet TLS bootstrap with auto-approval + certificate rotation. Uses a jumpbox with `kubectl` to create the bootstrap token, RBAC, and to verify node registration.
 
-Requirements
-------------
+## Variables
+- `node_join_jumpbox_host` (default: `jumpbox`)
+- `node_join_api_server_url` (required: e.g. `https://api.k8s.com:6443`)
+- `node_join_ca_cert_path` (default: `/etc/kubernetes/pki/ca.crt`)
+- `node_join_bootstrap_token` (optional; provide to reuse a token)
+- `node_join_enable_rbac` (default: `true`)
+- `node_join_wait_retries` (default: `30`)
+- `node_join_wait_delay` (default: `10`)
 
-Any pre-requisites that may not be covered by Ansible itself or the role should be mentioned here. For instance, if the role uses the EC2 module, it may be a good idea to mention in this section that the boto package is required.
+## Requirements
+- Jumpbox has `kubectl` configured to the target cluster (cluster-admin).
+- Workers have kubelet + container runtime installed.
+- Workers can reach API server on TCP 6443; time synced (NTP).
 
-Role Variables
---------------
-
-A description of the settable variables for this role should go here, including any variables that are in defaults/main.yml, vars/main.yml, and any variables that can/should be set via parameters to the role. Any variables that are read from other roles and/or the global scope (ie. hostvars, group vars, etc.) should be mentioned here as well.
-
-Dependencies
-------------
-
-A list of other roles hosted on Galaxy should go here, plus any details in regards to parameters that may need to be set for other roles, or variables that are used from other roles.
-
-Example Playbook
-----------------
-
-Including an example of how to use your role (for instance, with variables passed in as parameters) is always nice for users too:
-
-    - hosts: servers
-      roles:
-         - { role: username.rolename, x: 42 }
-
-License
--------
-
-BSD
-
-Author Information
-------------------
-
-An optional section for the role authors to include contact information, or a website (HTML is not allowed).
+## Example

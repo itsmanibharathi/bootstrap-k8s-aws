@@ -1,3 +1,48 @@
 ---
+# Kubernetes version
 kubernetes_version: "1.28.2"
 kubernetes_download_url: "https://dl.k8s.io/v{{ kubernetes_version }}/bin/linux/amd64"
+
+# Directories
+kubernetes_bin_dir: "/usr/local/bin"
+kubernetes_config_dir: "/etc/kubernetes"
+kubernetes_log_dir: "/var/log/kubernetes"
+
+# Service users
+kube_user: "kube"
+kube_group: "kube"
+
+# Network configuration
+service_cluster_ip_range: "{{ service_cidr }}"
+cluster_dns_ip: "{{ kubernetes_service_ip }}"
+
+# etcd endpoints
+etcd_servers: >-
+  {%- set etcd_endpoints = [] -%}
+  {%- for host in groups['control_plane'] -%}
+    {%- set endpoint = "https://" + hostvars[host]['private_ip'] + ":2379" -%}
+    {%- set _ = etcd_endpoints.append(endpoint) -%}
+  {%- endfor -%}
+  {{ etcd_endpoints | join(',') }}
+
+# Certificate paths
+cert_dir: "{{ k8s_pki_dir }}"
+root_ca_file: "{{ k8s_pki_dir }}/ca.crt"
+
+root_ca_file: "{{ k8s_pki_dir }}/ca.crt"
+kubelet_dir: /var/lib/kubelet
+kubelet_cfg_path: "{{ kubelet_dir }}/config.yaml"
+kubelet_bootstrap_kubeconfig: "{{ kubelet_dir }}/bootstrap-kubeconfig"
+kubelet_real_kubeconfig: "{{ kubelet_dir }}/kubeconfig"
+
+cluster_api_server: "https://api.k8s.local:6443"
+cluster_domain: cluster.local
+cluster_dns_ip: 10.96.0.10
+
+kubelet_config_api_version: kubelet.config.k8s.io/v1beta1
+kubelet_rotate_certs: true
+kubelet_server_tls_bootstrap: true
+
+# You may override from inventory host_vars/group_vars for zones, sizes, etc.
+kubelet_extra_flags: []
+kubelet_unit_extra_env: []   # e.g., ['Environment="HTTP_PROXY=http://..."']a

@@ -1,6 +1,6 @@
 # ---- Distribute PKI files to worker nodes ----
 
-# Only root CA certificate and service account public key needed for workers
+# Root CA certificate, service account public key, and kube-proxy cert needed for workers
 - name: Copy root CA certificate
   synchronize:
     src: "{{ k8s_pki_dir }}/ca.crt"
@@ -15,6 +15,16 @@
     mode: push
   delegate_to: jumpbox
 
+- name: Copy kube-proxy certificates
+  synchronize:
+    src: "{{ k8s_pki_dir }}/{{ item }}"
+    dest: "{{ k8s_pki_dir }}/{{ item }}"
+    mode: push
+  delegate_to: jumpbox
+  loop:
+    - kube-proxy.crt
+    - kube-proxy.key
+
 # Set permissions
 - name: Set permissions for worker PKI files
   file:
@@ -25,3 +35,11 @@
   loop:
     - "{{ k8s_pki_dir }}/ca.crt"
     - "{{ k8s_pki_dir }}/sa.pub"
+    - "{{ k8s_pki_dir }}/kube-proxy.crt"
+
+- name: Set permissions for kube-proxy private key
+  file:
+    path: "{{ k8s_pki_dir }}/kube-proxy.key"
+    owner: root
+    group: root
+    mode: "0600"

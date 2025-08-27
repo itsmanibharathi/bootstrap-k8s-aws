@@ -44,6 +44,7 @@
     - { src: "controller-manager.json.j2", dest: "controller-manager.json" }
     - { src: "scheduler.json.j2",         dest: "scheduler.json" }
     - { src: "admin.json.j2",             dest: "admin.json" }
+    - { src: "kube-proxy.json.j2",        dest: "kube-proxy.json" }
 
 - name: Generate component client certs
   shell: >
@@ -56,5 +57,6 @@
     - controller-manager
     - scheduler
     - admin
+    - proxy
   register: component_result
   failed_when: component_result is failed

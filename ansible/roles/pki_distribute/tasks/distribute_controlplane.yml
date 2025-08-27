@@ -40,6 +40,8 @@
     - kube-controller-manager.key
     - kube-scheduler.crt
     - kube-scheduler.key
+    - kube-proxy.crt
+    - kube-proxy.key
 
 # Front proxy certificates
 - name: Copy front proxy certificates

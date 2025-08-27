@@ -1,78 +1,41 @@
 ---
-- name: Generate bootstrap token
-  shell: |
-    openssl rand -hex 3
-  register: token_id
-  delegate_to: "{{ groups['jumpbox'][0] }}"
-  run_once: true
-
-- name: Generate token secret
-  shell: |
-    openssl rand -hex 8
-  register: token_secret
-  delegate_to: "{{ groups['jumpbox'][0] }}"
-  run_once: true
-
-- name: Set bootstrap token
-  set_fact:
-    bootstrap_token: "{{ token_id.stdout }}.{{ token_secret.stdout }}"
-  run_once: true
-
-- name: Create bootstrap token secret
-  kubernetes.core.k8s:
-    state: present
-    definition:
-      apiVersion: v1
-      kind: Secret
-      metadata:
-        name: "bootstrap-token-{{ token_id.stdout }}"
-        namespace: kube-system
-      type: bootstrap.kubernetes.io/token
-      data:
-        token-id: "{{ token_id.stdout | b64encode }}"
-        token-secret: "{{ token_secret.stdout | b64encode }}"
-        usage-bootstrap-authentication: "{{ 'true' | b64encode }}"
-        usage-bootstrap-signing: "{{ 'true' | b64encode }}"
-        auth-extra-groups: "{{ 'system:bootstrappers:kubeadm:default-node-token' | b64encode }}"
-  environment:
-    KUBECONFIG: /etc/kubernetes/admin.conf
-  delegate_to: "{{ groups['jumpbox'][0] }}"
-  run_once: true
-
-- name: Create bootstrap kubeconfig
-  template:
-    src: bootstrap-kubeconfig.j2
-    dest: /etc/kubernetes/bootstrap-kubelet.conf
-    mode: '0600'
-
-- name: Create PKI directory
-  file:
-    path: /etc/kubernetes/pki
+- name: Ensure PKI and kubelet dirs exist
+  become: true
+  ansible.builtin.file:
+    path: "{{ item }}"
     state: directory
-    mode: '0755'
+    owner: root
+    group: root
+    mode: "0755"
+  loop:
+    - "{{ k8s_pki_dir }}"
+    - "{{ kubelet_dir }}"
 
-- name: Copy CA certificate from jumpbox
-  copy:
-    src: "{{ k8s_pki_dir }}/ca.crt"
-    dest: /etc/kubernetes/pki/ca.crt
-    mode: '0644'
-  delegate_to: "{{ groups['jumpbox'][0] }}"
+# You can copy the CA from controller host or distribute from Ansible controller
+# Option A: pull from a controller host via delegate_to (requires SSH path)
+# Option B (shown): ship from controller files/vars; here we assume it's available locally
 
-- name: Start kubelet service
-  systemd:
+# - name: Place cluster root CA (PEM)
+#   become: true
+#   ansible.builtin.copy:
+#     src: ca.crt         # put ca.crt next to your play or use a role file path
+#     dest: "{{ root_ca_file }}"
+#     owner: root
+#     group: root
+#     mode: "0644"
+
+- name: Render bootstrap kubeconfig
+  become: true
+  ansible.builtin.template:
+    src: bootstrap-kubeconfig.j2
+    dest: "{{ kubelet_bootstrap_kubeconfig }}"
+    owner: root
+    group: root
+    mode: "0600"
+
+- name: Start kubelet (auto-join will begin)
+  become: true
+  ansible.builtin.systemd:
     name: kubelet
     state: started
-    enabled: yes
-
-- name: Wait for node to join cluster
-  kubernetes.core.k8s_info:
-    api_version: v1
-    kind: Node
-    name: "{{ inventory_hostname }}"
-  environment:
-    KUBECONFIG: /etc/kubernetes/admin.conf
-  register: node_status
-  until: node_status.resources | length > 0
-  retries: 30
-  delay: 10
-  delegate_to: "{{ groups['jumpbox'][0] }}"
+    enabled: true

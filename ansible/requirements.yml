@@ -5,4 +5,7 @@ collections:
   - name: community.general
     version: ">=5.0.0"
 
-roles: []
+roles:
+  - name: githubixx.containerd
+    src: https://github.com/githubixx/ansible-role-containerd.git
+    version: 0.15.0+2.1.3

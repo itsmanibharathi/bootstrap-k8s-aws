@@ -1,2 +1,2 @@
 ---
-# handlers file for roles/node_join
+# No handlers needed for the simplified node_join role

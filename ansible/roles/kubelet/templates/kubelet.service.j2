@@ -1,21 +1,26 @@
 [Unit]
-Description=kubelet: The Kubernetes Node Agent
-Documentation=https://kubernetes.io/docs/
+Description=Kubernetes Kubelet
+After=network-online.target containerd.service
 Wants=network-online.target
-After=network-online.target
 
 [Service]
-ExecStart=/usr/local/bin/kubelet \
-  --config=/var/lib/kubelet/config.yaml \
-  --container-runtime-endpoint=unix:///var/run/containerd/containerd.sock \
-  --kubeconfig=/etc/kubernetes/kubelet.conf \
-  --bootstrap-kubeconfig=/etc/kubernetes/bootstrap-kubelet.conf \
-  --rotate-certificates=true \
-  --rotate-server-certificates=true \
-  --cert-dir=/var/lib/kubelet/pki \
-  --v=2
-Restart=on-failure
+{% for line in kubelet_unit_extra_env %}
+{{ line }}
+{% endfor %}
+ExecStart=/usr/bin/kubelet \
+  --config={{ kubelet_cfg_path }} \
+  --bootstrap-kubeconfig={{ kubelet_bootstrap_kubeconfig }} \
+  --kubeconfig={{ kubelet_real_kubeconfig }} \
+  --container-runtime=remote \
+  --container-runtime-endpoint=unix:///run/containerd/containerd.sock \
+  --runtime-cgroups=/system.slice/containerd.service \
+  --kubelet-cgroups=/system.slice/kubelet.service{% for flag in kubelet_extra_flags %} \
+  {{ flag }}{% endfor %}
+
+Restart=always
+StartLimitInterval=0
 RestartSec=5
+LimitNOFILE=1048576
 
 [Install]
 WantedBy=multi-user.target

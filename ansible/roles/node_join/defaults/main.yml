@@ -1,2 +1,10 @@
 ---
-# defaults file for roles/node_join
+root_ca_file: "{{ k8s_pki_dir }}/ca.crt"
+
+kubelet_dir: /var/lib/kubelet
+kubelet_bootstrap_kubeconfig: "{{ kubelet_dir }}/bootstrap-kubeconfig"
+
+cluster_api_server: "https://api.k8s.local:6443"
+
+# You must supply a valid token (id.secret). Rotate as needed.
+kubelet_bootstrap_token: "abcdef.0123456789abcdef"
