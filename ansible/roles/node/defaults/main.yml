@@ -1,2 +1,4 @@
 ---
-# defaults file for roles/node
+# Bootstrap token configuration (should match tls_bootstrap role)
+bootstrap_token_id: "07401b"
+bootstrap_token_secret: "f395accd246ae52d"

@@ -1,0 +1,8 @@
+---
+# Bootstrap token configuration
+bootstrap_token_id: "07401b"
+bootstrap_token_secret: "f395accd246ae52d"
+bootstrap_token_ttl_days: 7
+
+# Cluster API endpoint
+cluster_endpoint: "api.k8s.local"

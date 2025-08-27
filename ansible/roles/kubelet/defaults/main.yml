@@ -35,7 +35,7 @@ kubelet_cfg_path: "{{ kubelet_dir }}/config.yaml"
 kubelet_bootstrap_kubeconfig: "{{ kubelet_dir }}/bootstrap-kubeconfig"
 kubelet_real_kubeconfig: "{{ kubelet_dir }}/kubeconfig"
 
-cluster_api_server: "https://api.k8s.local:6443"
+cluster_api_server: "https://{{ cluster_endpoint }}:6443"
 cluster_domain: cluster.local
 cluster_dns_ip: 10.96.0.10
 

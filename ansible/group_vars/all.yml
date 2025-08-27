@@ -1,6 +1,8 @@
 k8s_pki_dir: /etc/kubernetes/pki
 k8s_pki_etcd_dir: /etc/kubernetes/pki/etcd
 
+# Cluster API endpoint
+cluster_endpoint: api.k8s.local
 
 # etcd version and download
 etcd_version: "3.5.10"
@@ -10,7 +12,6 @@ etcd_download_url: "https://github.com/etcd-io/etcd/releases/download/v{{ etcd_v
 etcd_data_dir: "/var/lib/etcd"
 etcd_config_dir: "/etc/etcd"
 etcd_bin_dir: "/usr/local/bin"
-
 
 # etcd network
 etcd_client_port: 2379

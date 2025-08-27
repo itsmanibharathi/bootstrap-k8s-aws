@@ -4,5 +4,6 @@
 - import_playbook: playbooks/03-etcd.yml
 - import_playbook: playbooks/04-controlplane.yml
 - import_playbook: playbooks/06-cluster-init.yml
-# - import_playbook: playbooks/06-network.yml
-# - import_playbook: playbooks/07-addons.yml
+- import_playbook: playbooks/08-workers.yml
+# - import_playbook: playbooks/09-network.yml
+# - import_playbook: playbooks/10-addons.yml

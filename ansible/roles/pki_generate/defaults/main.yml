@@ -1,2 +1,6 @@
 ---
-# defaults file for roles/pki_generate
+# Certificate subject information
+k8s_cert_country: "US"
+k8s_cert_state: "CA"
+k8s_cert_locality: "San Francisco"
+k8s_cert_org_unit: "Kubernetes"

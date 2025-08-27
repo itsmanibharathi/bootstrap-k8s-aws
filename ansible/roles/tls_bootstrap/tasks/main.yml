@@ -1,0 +1,4 @@
+---
+- import_tasks: bootstrap_tokens.yml
+- import_tasks: rbac_setup.yml
+- import_tasks: auto_approval.yml

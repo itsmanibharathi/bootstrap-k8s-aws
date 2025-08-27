@@ -4,7 +4,7 @@
     kubectl config set-cluster k8s \
       --certificate-authority={{ cert_dir }}/ca.crt \
       --embed-certs=true \
-      --server=https://api.k8s.local:6443 \
+      --server=https://{{ cluster_endpoint }}:6443 \
       --kubeconfig=/root/.kube/config
     
     kubectl config set-credentials admin \

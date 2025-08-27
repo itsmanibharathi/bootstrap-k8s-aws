@@ -1,0 +1,24 @@
+---
+- name: Wait for pending CSRs
+  pause:
+    seconds: 30
+
+- name: Get pending kubelet-serving CSRs
+  shell: kubectl get csr --no-headers | grep Pending | grep kubelet-serving | awk '{print $1}'
+  register: pending_csrs
+  changed_when: false
+  failed_when: false
+
+- name: Approve pending kubelet-serving CSRs
+  shell: kubectl certificate approve {{ item }}
+  loop: "{{ pending_csrs.stdout_lines }}"
+  when: pending_csrs.stdout_lines | length > 0
+
+- name: Verify nodes are registered
+  shell: kubectl get nodes --no-headers | wc -l
+  register: node_count
+  changed_when: false
+
+- name: Display node registration status
+  debug:
+    msg: "{{ node_count.stdout }} nodes registered in cluster"

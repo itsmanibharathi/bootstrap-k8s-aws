@@ -1,0 +1,23 @@
+---
+- name: Disable swap
+  shell: swapoff -a
+  changed_when: false
+
+- name: Remove swap from fstab
+  lineinfile:
+    path: /etc/fstab
+    regexp: '.*swap.*'
+    state: absent
+
+- name: Create kubelet directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  loop:
+    - /var/lib/kubelet/pki
+    - /var/lib/kube-proxy
+    - /var/lib/kubernetes/pki
+    - /var/run/kubernetes

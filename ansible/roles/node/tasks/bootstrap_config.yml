@@ -1,0 +1,19 @@
+---
+# - name: Copy kube-proxy certificates to worker node
+#   copy:
+#     src: "{{ k8s_pki_dir }}/{{ item }}"
+#     dest: "{{ k8s_pki_dir }}/{{ item }}"
+#     owner: root
+#     group: root
+#     mode: '{{ "0600" if "key" in item else "0644" }}'
+#   loop:
+#     - kube-proxy.crt
+#     - kube-proxy.key
+
+- name: Create bootstrap kubeconfig
+  template:
+    src: bootstrap-kubeconfig.j2
+    dest: /var/lib/kubelet/bootstrap-kubeconfig
+    owner: root
+    group: root
+    mode: '0600'

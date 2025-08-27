@@ -10,7 +10,7 @@ ff02::2         ip6-allrouters
 
 # === Kubernetes Cluster Nodes ===
 {% for h in groups['lb'] %}
-{{ hostvars[h].private_ip }} api.{{ cluster_domain }} api
+{{ hostvars[h].private_ip }} {{ cluster_endpoint }} api
 {% endfor %}
 
 ##### Control Plane Nodes #####

@@ -49,14 +49,14 @@
 - name: Generate component client certs
   shell: >
     cfssl gencert -ca=ca.pem -ca-key=ca-key.pem -config=ca-config.json -profile=client
-    {{ item }}.json | cfssljson -bare {{ "kube-" + item if item != "admin" else "admin" }}
+    {{ item }}.json | cfssljson -bare {{ item if item in ['admin', 'kube-proxy'] else "kube-" + item }}
   args:
     chdir: "{{ k8s_pki_dir }}"
-    creates: "{{ k8s_pki_dir }}/{{ 'kube-' + item if item != 'admin' else 'admin' }}.pem"
+    creates: "{{ k8s_pki_dir }}/{{ item if item in ['admin', 'kube-proxy'] else 'kube-' + item }}.pem"
   loop:
     - controller-manager
     - scheduler
     - admin
-    - proxy
+    - kube-proxy
   register: component_result
   failed_when: component_result is failed

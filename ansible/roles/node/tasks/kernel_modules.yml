@@ -1,0 +1,24 @@
+---
+- name: Load kernel modules for container networking
+  copy:
+    dest: /etc/modules-load.d/k8s.conf
+    content: |
+      overlay
+      br_netfilter
+
+- name: Ensure modules are loaded
+  command: modprobe {{ item }}
+  loop:
+    - overlay
+    - br_netfilter
+
+- name: Set sysctl params for Kubernetes networking
+  sysctl:
+    name: "{{ item.name }}"
+    value: "{{ item.value }}"
+    state: present
+    reload: yes
+  loop:
+    - { name: "net.bridge.bridge-nf-call-iptables", value: 1 }
+    - { name: "net.bridge.bridge-nf-call-ip6tables", value: 1 }
+    - { name: "net.ipv4.ip_forward", value: 1 }

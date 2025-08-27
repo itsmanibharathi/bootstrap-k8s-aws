@@ -16,7 +16,7 @@
 - name: Build base DNS lists
   set_fact:
     api_dns:
-      - "api.{{ cluster_domain | default('cluster.local') }}"
+      - "{{ cluster_endpoint }}"
     k8s_dns:
       - "kubernetes"
       - "kubernetes.default"

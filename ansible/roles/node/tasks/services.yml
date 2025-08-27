@@ -1,0 +1,10 @@
+---
+- name: Start and enable kubelet and kube-proxy
+  systemd:
+    name: "{{ item }}"
+    state: started
+    enabled: yes
+    daemon_reload: yes
+  loop:
+    - kubelet
+    - kube-proxy

@@ -1,0 +1,19 @@
+---
+- name: Download kubelet and kube-proxy binaries
+  get_url:
+    url: "https://dl.k8s.io/release/v{{ kubernetes_version }}/bin/linux/amd64/{{ item }}"
+    dest: "/usr/local/bin/{{ item }}"
+    mode: '0755'
+    owner: root
+    group: root
+  loop:
+    - kubelet
+    - kube-proxy
+
+- name: Download kubectl binary
+  get_url:
+    url: "https://dl.k8s.io/release/v{{ kubernetes_version }}/bin/linux/amd64/kubectl"
+    dest: "/usr/local/bin/kubectl"
+    mode: '0755'
+    owner: root
+    group: root

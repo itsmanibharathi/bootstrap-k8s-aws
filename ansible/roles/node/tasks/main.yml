@@ -1,2 +1,8 @@
 ---
-# tasks file for roles/node
+- import_tasks: kernel_modules.yml
+- import_tasks: system_prep.yml
+- import_tasks: install_binaries.yml
+- import_tasks: bootstrap_config.yml
+- import_tasks: kubelet_config.yml
+- import_tasks: kube_proxy_config.yml
+- import_tasks: services.yml

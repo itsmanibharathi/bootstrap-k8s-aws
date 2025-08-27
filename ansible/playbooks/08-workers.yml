@@ -1,6 +1,25 @@
+---
+# Setup TLS Bootstrap on Control Plane
+- name: Configure TLS Bootstrap
+  hosts: jumpbox
+  become: yes
+  roles:
+    - tls_bootstrap
 
-
-- name: Setup worker nodes
+# Configure Worker Nodes
+- name: Setup Worker Nodes
   hosts: control_plane
+  become: yes
   roles:
     - githubixx.containerd
+    - node
+
+# Final verification
+- name: Verify Node Registration
+  hosts: jumpbox
+  become: yes
+  tasks:
+    - name: Wait and check nodes
+      shell: kubectl get nodes
+      register: nodes_status
+    - debug: var=nodes_status.stdout_lines

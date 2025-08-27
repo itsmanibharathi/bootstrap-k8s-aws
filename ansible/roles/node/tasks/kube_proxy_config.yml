@@ -1,0 +1,25 @@
+---
+- name: Generate kube-proxy kubeconfig
+  template:
+    src: kube-proxy.kubeconfig.j2
+    dest: /var/lib/kube-proxy/kube-proxy.kubeconfig
+    owner: root
+    group: root
+    mode: '0600'
+
+- name: Create kube-proxy configuration
+  template:
+    src: kube-proxy-config.yaml.j2
+    dest: /var/lib/kube-proxy/kube-proxy-config.yaml
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Create kube-proxy systemd service
+  template:
+    src: kube-proxy.service.j2
+    dest: /etc/systemd/system/kube-proxy.service
+    owner: root
+    group: root
+    mode: '0644'
+  notify: restart kube-proxy

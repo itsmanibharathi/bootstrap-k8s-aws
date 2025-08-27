@@ -1,0 +1,19 @@
+---
+- name: Calculate bootstrap token expiration
+  shell: date -u --date "+{{ bootstrap_token_ttl_days }} days" +"%Y-%m-%dT%H:%M:%SZ"
+  register: token_expiration
+  changed_when: false
+
+- name: Create bootstrap token secret
+  shell: |
+    kubectl create secret generic bootstrap-token-{{ bootstrap_token_id }} \
+      --namespace=kube-system \
+      --type=bootstrap.kubernetes.io/token \
+      --from-literal=description="Bootstrap token for TLS bootstrapping" \
+      --from-literal=token-id={{ bootstrap_token_id }} \
+      --from-literal=token-secret={{ bootstrap_token_secret }} \
+      --from-literal=expiration={{ token_expiration.stdout }} \
+      --from-literal=usage-bootstrap-authentication=true \
+      --from-literal=usage-bootstrap-signing=true \
+      --from-literal=auth-extra-groups=system:bootstrappers:worker \
+      --dry-run=client -o yaml | kubectl apply -f -
